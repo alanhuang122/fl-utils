@@ -33,7 +33,7 @@ def render_requirements(rl, fate):
 
 
 class Storylet: #done?
-    def __init__(self, id):
+    def __init__(self, id, shallow=False):
         global data
         jdata = data['events:{}'.format(id)]
         self.raw = jdata
@@ -52,9 +52,15 @@ class Storylet: #done?
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
+        
         self.branches = []
-        for b in jdata['ChildBranches']:
-            self.branches.append(b)
+        if not shallow:
+            for b in jdata['ChildBranches']:
+                branch=Branch.get(b, self)
+                self.branches.append(branch)
+                for e in branch.events.items():
+                    if e[0].endswith('Event'):
+                        e[1].parent = b
     def __repr__(self):
         return u'"{}"'.format(self.title)
     def __str__(self):
@@ -68,7 +74,7 @@ class Storylet: #done?
                 .join(self.render_branches()))\
                 .encode('utf-8')
     def render_branches(self):
-        return [str(Branch(b,self)).decode('utf-8') for b in self.branches]
+        return [str(b).decode('utf-8') for b in self.branches]
     @classmethod
     def get(self, id):
         global cache
@@ -76,12 +82,8 @@ class Storylet: #done?
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Storylet(id)
-            cache[key].branches = [Branch.get(x, cache[key]) for x in cache[key].branches]
-            for b in cache[key].branches:
-                for e in b.events.items():
-                    if e[0].endswith('Event'):
-                        e[1].parent = b
+            cache[key] = Storylet(id,True)
+            cache[key] = Storylet(id,False)
             return cache[key]
 
 class Branch:   #done

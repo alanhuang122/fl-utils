@@ -91,7 +91,7 @@ def update():
     if len(revisions) == 1:
         updates = [acquire(revisions[0]['id'], revisions[0]['changes'][0]['rev'])]
     elif len(revisions) > 1 and len(revisions) < 50:
-        updates = acquire_bulk(changes)
+        updates = acquire_bulk(revisions)
     else:
         print('getting {} records...'.format(len(revisions)))
         updates = []
