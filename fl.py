@@ -33,9 +33,8 @@ def render_requirements(rl, fate):
 
 
 class Storylet: #done?
-    def __init__(self, id):
+    def __init__(self, jdata):
         global data
-        jdata = data['events:{}'.format(id)]
         self.raw = jdata
         self.title = jdata['Name']
         self.desc = jdata['Description']
@@ -76,13 +75,14 @@ class Storylet: #done?
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Storylet(id)
-            cache[key].branches = [Branch.get(x, cache[key]) for x in cache[key].branches]
-            for b in cache[key].branches:
+            s = Storylet(data['events:{}'.format(id)])
+            cache[key] = s
+            s.branches = [Branch.get(x, s) for x in s.branches]
+            for b in s.branches:
                 for e in b.events.items():
                     if e[0].endswith('Event'):
                         e[1].parent = b
-            return cache[key]
+            return s
 
 class Branch:   #done
     def __init__(self, jdata, parent):
@@ -301,13 +301,13 @@ class Event:    #done
         return string
         
     @classmethod
-    def get(self, id, costs):
+    def get(self, jdata, costs):
         global cache
-        key = u'events:{}'.format(id)
+        key = u'events:{}'.format(jdata['Id'])
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Event(id, costs)
+            cache[key] = Event(jdata, costs)
             return cache[key]
 
 def sub_qualities(string):
@@ -366,23 +366,19 @@ class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
                 try:
                     return u'{:+} x {}{}'.format(self.amount, self.quality.name, limits)
                 except:
-                    return u'{} {}{}'.format('' if self.amount.startswith('-') else u'+' + self.amount, self.quality.name, limits)
+                    return u'{} {}{}'.format(('' if self.amount.startswith('-') else u'+') + self.amount, self.quality.name, limits)
             else:
                 try:
                     return u'{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
                 except:
                     return u'{} ({} cp{})'.format(self.quality.name, u'' if self.amount.startswith('-') else u'' + self.amount, limits)
                     
-
-#debug 284734
-
 class Quality:  #done
-    def __init__(self, id):
+    def __init__(self, jdata):
         #HimbleLevel is used to determine order within categories for items
-        jdata = data['qualities:{}'.format(id)]
         self.raw = jdata
         self.name = jdata['Name']
-        self.id = id
+        self.id = jdata['Id']
         try:
             self.desc = jdata['Description']
         except KeyError:
@@ -452,7 +448,7 @@ class Quality:  #done
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Quality(id)
+            cache[key] = Quality(data[key])
             try:
                 cache[key].event = Storylet.get(cache[key].event)
             except AttributeError:
