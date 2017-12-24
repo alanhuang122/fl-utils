@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 from Crypto.Cipher import AES
 from base64 import b64decode
 import json, requests
