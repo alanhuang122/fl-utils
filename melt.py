@@ -2,9 +2,12 @@ from Crypto.Cipher import AES
 from base64 import b64decode
 import json, requests
 from requests_toolbelt import MultipartDecoder as Decoder
+from datadiff import diff
 
 last_seq = 0
 data = {}
+changes = {}
+old = {}
 
 def first(text,key):
     ecb = AES.new(key, AES.MODE_ECB)
@@ -45,6 +48,7 @@ def acquire_bulk(changes):
 def load():
     global data
     global last_seq
+    print('loading...')
     try:
         with open('./text/fl.dat') as f:
             last_seq = int(f.readline())
@@ -61,12 +65,14 @@ def save():
             json.dump({'key': i[0], 'value': i[1]}, f)
             f.write('\n')
 
+from collections import OrderedDict
+
 def update():
-    global data
     global last_seq
-    revisions = []
+    revisions = OrderedDict()
     headers = {"Host": 'couchbase-fallenlondon.storynexus.com:4984', "Content-Type": "application/json", "Connection": None, "Accept-Encoding": None, "Accept": None, "User-Agent": None}
     payload = '{{"feed":"longpoll","heartbeat":300000,"style":"all_docs","since":{},"limit":500}}'
+    print('getting updates...')
     while True:
         try:
             r = requests.post('http://couchbase-fallenlondon.storynexus.com:4984/sync_gateway_json/_changes', data=payload.format(last_seq), headers=headers, timeout=1)
@@ -74,31 +80,42 @@ def update():
             for row in response['results']:
                 if row['seq'] < 6000:
                     continue
-                revisions.append(row)
+                revisions[row['id']] = row
             last_seq = response['last_seq']
         except:
             break
     if not revisions:
         print('no updates')
         return
-    if len(revisions) == 1:
-        updates = [acquire(revisions[0]['id'], revisions[0]['changes'][0]['rev'])]
-    elif len(revisions) > 1 and len(revisions) < 50:
-        updates = acquire_bulk(changes)
+    if len(revisions.values()) == 1:
+        updates = [acquire(revisions.values()[0]['id'], revisions.values()[0]['changes'][0]['rev'])]
+    elif len(revisions.values()) > 1 and len(revisions.values()) < 50:
+        updates = acquire_bulk(revisions.values())
     else:
-        print('getting {} records...'.format(len(revisions)))
+        print('getting {} records...'.format(len(revisions.values())))
         updates = []
-        chunks = [revisions[i:i+50] for i in xrange(0, len(revisions), 50)]
+        chunks = [revisions.values()[i:i+50] for i in xrange(0, len(revisions.values()), 50)]
         for chunk in chunks:
             updates += acquire_bulk(chunk)
-    for item in zip([x['id'] for x in revisions], updates):
+    for item in zip([x['id'] for x in revisions.values()], updates):
         if item[0] in data:
+            old[item[0]] = data[item[0]]
             print('updated key: {}'.format(item[0]))
         else:
             print('new key: {}'.format(item[0]))
         data[item[0]] = item[1]
+        datatype, id = item[0].split(':')
+        id = int(id)
+        try:
+            changes[datatype].append(id)
+        except KeyError:
+            changes[datatype] = [id]
     
+def print_diff(key):
+    print(str(diff(old[key], data[key])).decode('string-escape'))
+
 load()
-update()
 import fl
 fl.data=data
+update()
+save()
