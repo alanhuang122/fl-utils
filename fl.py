@@ -68,7 +68,7 @@ class Storylet: #done?
                 .join(self.render_branches()))\
                 .encode('utf-8')
     def render_branches(self):
-        return [str(b).decode('utf-8') for b in self.branches]
+        return [str(Branch(b,self)).decode('utf-8') for b in self.branches]
     @classmethod
     def get(self, id):
         global cache

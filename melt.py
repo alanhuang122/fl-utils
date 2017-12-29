@@ -45,7 +45,14 @@ def acquire_bulk(changes):
     r = requests.post('http://couchbase-fallenlondon.storynexus.com:4984/sync_gateway_json/_bulk_get?revs=true&attachments=true', data=payload, headers=post_headers)
     decoder = Decoder.from_response(r)
     updates = [json.loads(x.text) for x in decoder.parts]
-    return [json.loads(unicode(clean(decrypt(u['body'])), 'utf-8')) for u in updates]
+    dec = []
+    for u in updates:
+        try:
+            dec.append(json.loads(unicode(clean(decrypt(u['body'])), 'utf-8')))
+        except KeyError:
+            print u
+    return dec
+   
 
 def load():
     global data
