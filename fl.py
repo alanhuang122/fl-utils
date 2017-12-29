@@ -208,7 +208,10 @@ class Requirement:  #done
             pass
     def __repr__(self):
         if self.type == u'Challenge':
-            return u'{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
+            if self.quality.id == 432:
+                return u'Luck: {}% chance'.format(50 - self.difficulty * 10)
+            else:
+                return u'{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
         else:
             try:
                 if self.lower_bound == self.upper_bound:
