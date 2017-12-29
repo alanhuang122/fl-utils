@@ -2,6 +2,7 @@
 from Crypto.Cipher import AES
 from base64 import b64decode
 import json, requests
+import os,errno
 from requests_toolbelt import MultipartDecoder as Decoder
 from datadiff import diff
 
@@ -60,7 +61,12 @@ def load():
         pass
 
 def save():
-    with open('./text/fl.dat', 'w') as f:
+    try:
+        os.makedirs('text')
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+    with open('./text/fl.dat', 'w+') as f:
         f.write('{}\n'.format(last_seq))
         for i in data.items():
             json.dump({'key': i[0], 'value': i[1]}, f)
