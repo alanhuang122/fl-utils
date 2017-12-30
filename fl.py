@@ -364,6 +364,14 @@ class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
                     limits = u''
                 
         try:
+            if hasattr(self.quality, 'leveldesc'):
+                descs = sorted(self.quality.leveldesc.items(), reverse=True)
+                for x in descs:
+                    if x[0] <= self.setTo:
+                        desc = x
+                        break
+                if desc:
+                    return u'{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
             return u'{} (set to {}{})'.format(self.quality.name, self.setTo, limits)
         except:
             if self.quality.nature == 2 or not self.quality.pyramid:
