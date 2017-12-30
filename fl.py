@@ -377,6 +377,78 @@ class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
                 except:
                     return u'{} ({} cp{})'.format(self.quality.name, u'' if self.amount.startswith('-') else u'' + self.amount, limits)
                     
+categories = {0:        'Unspecified',
+              1:        'Currency',
+              101:      'Weapon',
+              103:      'Hat',
+              104:      'Gloves',
+              105:      'Boots',
+              106:      'Companion',
+              107:      'Clothing',
+              150:      'Curiosity',
+              160:      'Advantage',
+              170:      'Document',
+              200:      'Goods',
+              1000:     'BasicAbility',
+              2000:     'SpecificAbility',
+              3000:     'Profession',
+              5000:     'Story',
+              5001:     'Intrigue',
+              5002:     'Dreams',
+              5003:     'Reputation',
+              5004:     'Quirk',
+              5025:     'Acquaintance',
+              5050:     'Accomplishment',
+              5100:     'Venture',
+              5200:     'Progress',
+              5500:     'Menace',
+              6000:     'Contacts',
+              6661:     'Hidden',
+              6662:     'Randomizer',
+              7000:     'Ambition',
+              8000:     'Route',
+              9000:     'Seasonal',
+              10000:    'Ship',
+              11000:    'ConstantCompanion',
+              12000:    'Club',
+              13000:    'Affiliation',
+              14000:    'Transportation',
+              15000:    'HomeComfort',
+              16000:    'Academic',
+              17000:    'Cartography',
+              18000:    'Contraband',
+              19000:    'Elder',
+              20000:    'Infernal',
+              21000:    'Influence',
+              22000:    'Literature',
+              22500:    'Lodgings',
+              23000:    'Luminosity',
+              24000:    'Mysteries',
+              25000:    'Nostalgia',
+              26000:    'RagTrade',
+              27000:    'Ratness',
+              28000:    'Rumour',
+              29000:    'Legal',
+              30000:    'WildWords',
+              31000:    'Wines',
+              32000:    'Rubbery',
+              33000:    'SidebarAbility',
+              34000:    'MajorLateral',
+              35000:    'Quest',
+              36000:    'MinorLateral',
+              37000:    'Circumstance',
+              39000:    'Avatar',
+              40000:    'Objective',
+              45000:    'Key',
+              50000:    'Knowledge',
+              60000:    'Destiny',
+              70000:    'Modfier',
+              70001:    'GreatGame',
+              70002:    'ZeeTreasures',
+              70003:    'Sustenance'
+}
+
+
 class Quality:  #done
     def __init__(self, jdata):
         #HimbleLevel is used to determine order within categories for items
@@ -420,7 +492,7 @@ class Quality:  #done
         except KeyError:
             pass
         try:
-            self.category = jdata['Category']
+            self.category = categories[jdata['Category']]
         except KeyError:
             pass
         try:
@@ -436,16 +508,34 @@ class Quality:  #done
         except KeyError:
             pass
         try:
-            self.slot = jdata['AssignToSlot']
+            self.slot = jdata['AssignToSlot']['Id']
         except KeyError:
             pass
         try:
             self.event = jdata['UseEvent']['Id']#fix
         except KeyError:
             pass
+        try:
+            self.enhancements = []
+            for x in jdata['Enhancements']:
+                self.enhancements.append('{:+} {}'.format(x['Level'], Quality.get(x['AssociatedQuality']['Id']).name))
+        except KeyError:
+            pass
     def __repr__(self):
         return u'Quality: {}'.format(self.name)
-
+    def __str__(self):
+        string = u'Quality: {}'.format(self.name)
+        try:
+            string += u'\nCategory: {}'.format(self.category)
+        except AttributeError:
+            pass
+        try:
+            if self.enhancements:
+                string += u'\nEnhancements: [{}]'.format(', '.join(self.enhancements))
+        except AttributeError:
+            pass
+        return string
+            
     @classmethod
     def get(self, id):
         key = u'qualities:{}'.format(id)
