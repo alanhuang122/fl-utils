@@ -453,7 +453,10 @@ class Quality:  #done
     def __init__(self, jdata):
         #HimbleLevel is used to determine order within categories for items
         self.raw = jdata
-        self.name = jdata['Name']
+        try:
+            self.name = jdata['Name']
+        except KeyError:
+            self.name = u'(no name)'
         self.id = jdata['Id']
         try:
             self.desc = jdata['Description']
@@ -534,7 +537,7 @@ class Quality:  #done
                 string += u'\nEnhancements: [{}]'.format(', '.join(self.enhancements))
         except AttributeError:
             pass
-        return string
+        return string.encode('utf-8')
             
     @classmethod
     def get(self, id):
