@@ -82,8 +82,8 @@ class Storylet: #done?
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Storylet(id,True)
-            cache[key] = Storylet(id,False)
+            cache[key] = Storylet(data['events:{}'.format(id)],True)
+            cache[key] = Storylet(data['events:{}'.format(id)],False)
             return cache[key]
 
 class Branch:   #done
