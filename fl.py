@@ -321,7 +321,7 @@ def sub_qualities(string):
 
 
 class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
-    def __init__(self, effect, costs):
+    def __init__(self, effect, costs=None):
         self.raw = effect
         self.quality = Quality.get(effect['AssociatedQuality']['Id'])
         self.equip = u'ForceEquip' in effect
@@ -524,7 +524,7 @@ class AccessCode:
             self.message2 = u'(no message)'
         self.effects = []
         for e in jdata['QualitiesAffected']:
-            self.effects.append(Effect(e, None))
+            self.effects.append(Effect(e))
     def __repr__(self):
         string = u'Access code name: {}'.format(self.name)
         string += u'\nInitial message: {}'.format(self.message1)
