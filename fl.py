@@ -95,22 +95,10 @@ class Branch:   #done
             self.title = '(no title)'
         self.id = jdata['Id']
         self.parent = parent
-        try:
-            self.desc = jdata['Description']
-        except KeyError:
-            self.desc = ''
-        try:
-            self.cost = jdata['ActionCost']
-        except KeyError:
-            self.cost = None
-        try:
-            self.button = jdata['ButtonText']
-        except KeyError:
-            self.button = 'Go'
-        try:
-            self.fate = jdata['CurrencyCost']
-        except KeyError:
-            self.fate = None
+        self.desc = jdata.get('Description', '(no description)')
+        self.cost = jdata.get('ActionCost', 1)
+        self.button = jdata.get('ButtonText', 'Go')
+        self.fate = jdata.get('CurrencyCost')
         try:
             self.act = Act.get(jdata['Act']['Id'])
         except KeyError:
@@ -173,10 +161,7 @@ class Requirement:  #done
     def __init__(self, jdata):
         self.raw = jdata
         self.quality = Quality.get(jdata['AssociatedQuality']['Id'])
-        try:
-            self.is_cost = jdata['IsCostRequirement']
-        except KeyError:
-            self.is_cost = False
+        self.is_cost = jdata.get('IsCostRequirement', False)
         try:
             self.upper_bound = jdata['MaxLevel']
         except:
@@ -203,10 +188,7 @@ class Requirement:  #done
             self.test_type = self.quality.test_type
         else:
             self.type = u'Requirement'
-        try:
-            self.visibility = jdata['BranchVisibleWhenRequirementFailed']
-        except KeyError:
-            pass
+        self.visibility = jdata.get('BranchVisibleWhenRequirementFailed')
     def __repr__(self):
         if self.type == u'Challenge':
             if self.quality.id == 432:
@@ -231,19 +213,9 @@ class Event:    #done
         self.raw = jdata
         self.id = jdata['Id']
         self.parent = None        
-        try:
-            self.title = jdata['Name']
-        except KeyError:
-            self.title = u''
-        try:
-            self.desc = jdata['Description']
-        except KeyError:
-            self.desc = u''
-        try:
-            self.category = jdata['Category']
-        except KeyError:
-            self.category = None
-        
+        self.title = jdata.get('Name', '(no title)')
+        self.desc = jdata.get('Description', '(no description)')
+        self.category = jdata.get('Category')
         self.effects = []
         if costs:
             for c in costs:
@@ -257,26 +229,11 @@ class Event:    #done
                 self.exotic_effect = None
         except KeyError:
             self.exotic_effect = None
-        try:
-            self.lodging = jdata['MoveToDomicile']['Id']
-        except KeyError:
-            self.lodging = None
-        try:
-            self.livingstory = jdata['LivingStory']['Id']
-        except KeyError:
-            self.livingstory = None
-        try:
-            self.img = jdata['Image']
-        except KeyError:
-            self.img = None
-        try:
-            self.newsetting = jdata['SwitchToSettingId']
-        except KeyError:
-            self.newsetting = None
-        try:
-            self.newarea = jdata['MoveToArea']
-        except KeyError:
-            self.newarea = None
+        self.lodging = jdata.get('MoveToDomicile', {}).get('Id')
+        self.livingstory = jdata.get('LivingStory', {}).get('Id')
+        self.img = jdata.get('Image')
+        self.newsetting = jdata.get('SwitchToSettingId')
+        self.newarea = jdata.get('MoveToArea')
         try:
             self.linkedevent = Storylet.get(jdata['LinkToEvent']['Id'])
         except KeyError:
@@ -323,8 +280,7 @@ def sub_qualities(string):
         string = string.replace(x, Quality.get(int(x)).name)
     return string
 
-
-class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
+class Effect:   #done: Priority goes 3/2/1/0
     def __init__(self, effect, costs=None):
         self.raw = effect
         self.quality = Quality.get(effect['AssociatedQuality']['Id'])
@@ -462,30 +418,19 @@ categories = {0:        'Unspecified',
               70003:    'Sustenance'
 }
 
-
-class Quality:  #done
+class Quality:
     def __init__(self, jdata):
         #HimbleLevel is used to determine order within categories for items
         self.raw = jdata
-        try:
-            self.name = jdata['Name']
-        except KeyError:
-            self.name = u'(no name)'
+        self.name = jdata.get('Name', u'(no name)')
         self.id = jdata['Id']
-        try:
-            self.desc = jdata['Description']
-        except KeyError:
-            self.desc = u''
+        self.desc = jdata.get('Description', u'(no description)')
         self.pyramid = u'UsePyramidNumbers' in jdata
         try:
             self.desc += u'\n' + jdata['LevelDescriptionText']
         except KeyError:
             pass
-        try:
-            self.nature = jdata['Nature'] #1: quality; 2: item
-        except KeyError:
-            self.nature = 1
-            pass
+        self.nature = jdata.get('Nature', 1) #1: quality; 2: item
         try:
             qldstr = jdata['ChangeDescriptionText']
             self.changedesc = parse_qlds(qldstr)
@@ -504,34 +449,13 @@ class Quality:  #done
             self.variables = variables
         except KeyError:
             pass
-        try:
-            self.cap = jdata['Cap']
-        except KeyError:
-            pass
-        try:
-            self.category = categories[jdata['Category']]
-        except KeyError:
-            pass
-        try:
-            self.tag = jdata['Tag']
-        except KeyError:
-            pass
-        if u'DifficultyTestType' in jdata:
-            self.test_type = u'Narrow'
-        else:
-            self.test_type = u'Broad'
-        try:
-            self.difficulty = jdata['DifficultyScaler']
-        except KeyError:
-            pass
-        try:
-            self.slot = jdata['AssignToSlot']['Id']
-        except KeyError:
-            pass
-        try:
-            self.event = jdata['UseEvent']['Id']#fix
-        except KeyError:
-            pass
+        self.cap = jdata.get('Cap')
+        self.category = categories.get(jdata.get('Category'))
+        self.tag = jdata.get('Tag')
+        self.test_type = u'Narrow' if u'DifficultyTestType' in jdata else u'Broad'
+        self.difficulty = jdata.get('DifficultyScaler')
+        self.slot = jdata.get('AssignToSlot', {}).get('Id')
+        self.event = jdata.get('UseEvent', {}).get('Id') #fix infinite loop
         try:
             self.enhancements = []
             for x in jdata['Enhancements']:
@@ -560,10 +484,8 @@ class Quality:  #done
             return cache[key]
         else:
             cache[key] = Quality(data[key])
-            try:
+            if cache[key].event:
                 cache[key].event = Storylet.get(cache[key].event)
-            except AttributeError:
-                pass
             return cache[key]
 
 def parse_qlds(string):
