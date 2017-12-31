@@ -513,7 +513,32 @@ class Setting:  #definition unclear
 
 class Area:
     def __init__(self, jdata):
-        pass
+        self.raw = jdata
+        self.id = jdata.get('Id')
+        self.name = jdata.get('Name', '(no name)')
+        self.desc = jdata.get('Description', '(no description)')
+        self.image = jdata.get('ImageName', '(no image)')
+        self.showOps = 'ShowOps' in jdata
+        try:
+            self.unlock = Quality.get(jdata['UnlocksWithQuality']['Id'])
+        except:
+            pass
+        self.premium = 'PremiumSubRequired' in jdata
+        self.message = jdata.get('MoveMessage', '(no move message)')
+    def __repr__(self):
+        return u'{} (Id {})'.format(self.name, self.id)
+    def __str__(self):
+        string = u'{} (Id {})'.format(self.name, self.id)
+        string += u'\nDescription: {}'.format(self.desc)
+        string += u'\nOpportunity cards are ' + (u'' if self.showOps else u'NOT ') + u'visible'
+        try:
+            string += u'\nUnlocks with {}'.format(self.unlock.name)
+        except AttributeError:
+            pass
+        if self.premium:
+            string += u'\n Requires Exceptional Friendship'
+        string += u'\n{}'.format(self.message)
+        return string.encode('utf-8')
     @classmethod
     def get(self, id):
         key = u'areas:{}'.format(id)
