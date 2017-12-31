@@ -49,6 +49,8 @@ class Storylet: #done?
         except KeyError:
             self.area = None
         self.availability = jdata['Deck']['Name']
+        if self.availability == 'Sometimes':
+            self.frequency = jdata['Distribution']
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
@@ -495,11 +497,10 @@ def parse_qlds(string):
     return qld
 
 class Setting:  #definition unclear
-    def __init__(self, id):
-        temp = data['settings:{}'.format(id)]
-        self.raw = temp
-        self.title = temp['Name']
-        description = temp['StartingArea']['Description']
+    def __init__(self, jdata):
+        self.raw = jdata
+        self.title = jdata['Name']
+        description = jdata['StartingArea']['Description']
 
     @classmethod
     def get(self, id):
@@ -507,19 +508,24 @@ class Setting:  #definition unclear
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Setting(id)
+            cache[key] = Setting(data[id])
             return cache[key]
 
 class Area:
-    def __init__(self, id):
+    def __init__(self, jdata):
         pass
     @classmethod
     def get(self, id):
-        return Area(0)
+        key = u'areas:{}'.format(id)
+        if key in cache:
+            return cache[key]
+        else:
+            cache[key] = Area(data[key])
+            return cache[key]
     
 class Act:  #for social actions
-    def __init__(self, id):
-        jdata = data['acts:{}'.format(id)]
+    def __init__(self, jdata):
+        self.raw = jdata
         self.name = jdata['Name']
         self.msg = jdata['InviteMessage']
     def __repr__(self):
@@ -530,7 +536,7 @@ class Act:  #for social actions
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Act(id)
+            cache[key] = Act(data[id])
             return cache[key]
 
 class AccessCode:
