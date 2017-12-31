@@ -118,7 +118,7 @@ class Branch:   #done
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
-        costs = [ r for r in self.requirements if r.is_cost ]
+        costs = [ {'AssociatedQuality': {'Id': r.quality.id}, 'Level': -r.lower_bound} for r in self.requirements if r.is_cost ]
         self.events = {}
         for key in jdata.keys():
             if key in ['DefaultEvent', u'SuccessEvent', u'RareSuccessEvent', u'RareSuccessEventChance', u'RareDefaultEvent', u'RareDefaultEventChance']:
@@ -195,7 +195,7 @@ class Requirement:  #done
             self.difficulty = jdata['DifficultyLevel']
         except:
             try:
-                self.difficulty = jdata['DifficultyAdvanced']
+                self.difficulty = sub_qualities(jdata['DifficultyAdvanced'])
             except KeyError:
                 pass
         if hasattr(self, u'difficulty'):
@@ -245,8 +245,11 @@ class Event:    #done
             self.category = None
         
         self.effects = []
+        if costs:
+            for c in costs:
+                self.effects.append(Effect(c))
         for e in jdata['QualitiesAffected']:
-            self.effects.append(Effect(e, costs))
+            self.effects.append(Effect(e))
         try:
             if jdata['ExoticEffects'] != u'':
                 self.exotic_effect = jdata['ExoticEffects']
@@ -316,7 +319,7 @@ class Event:    #done
             return cache[key]
 
 def sub_qualities(string):
-    for x in re.findall(r'\[q:(\d+)\]', string):
+    for x in re.findall(r'\[qb?:(\d+)\]', string):
         string = string.replace(x, Quality.get(int(x)).name)
     return string
 
@@ -365,14 +368,16 @@ class Effect:   #done: Priority goes 3/2/1/0 #todo: integrate costs
                     limits = u''
                 
         try:
-            if hasattr(self.quality, 'leveldesc'):
+            if hasattr(self.quality, 'leveldesc') and isinstance(self.setTo, int):
                 descs = sorted(self.quality.leveldesc.items(), reverse=True)
                 for x in descs:
                     if x[0] <= self.setTo:
                         desc = x
                         break
-                if desc:
+                try:
                     return u'{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
+                except NameError:
+                    pass
             return u'{} (set to {}{})'.format(self.quality.name, self.setTo, limits)
         except:
             if self.quality.nature == 2 or not self.quality.pyramid:
