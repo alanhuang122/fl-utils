@@ -89,10 +89,7 @@ class Storylet: #done?
 class Branch:   #done
     def __init__(self, jdata, parent):
         self.raw = jdata
-        try:
-            self.title = jdata['Name']
-        except:
-            self.title = '(no title)'
+        self.title = jdata.get('Name', u'(no title)')
         self.id = jdata['Id']
         self.parent = parent
         self.desc = jdata.get('Description', '(no description)')
@@ -539,18 +536,9 @@ class Act:  #for social actions
 class AccessCode:
     def __init__(self, jdata):
         self.raw = jdata
-        try:
-            self.name = jdata['Name']
-        except:
-            self.name = u'(no name)'
-        try:
-            self.message1 = jdata['InitialMessage']
-        except:
-            self.message1 = u'(no message)'
-        try:
-            self.message2 = jdata['CompletedMessage']
-        except:
-            self.message2 = u'(no message)'
+        self.name = jdata.get('Name', u'(no name)')
+        self.message1 = jdata.get('InitialMessage', u'(no message)')
+        self.message2 = jdata.get('CompletedMessage', u'(no message)')
         self.effects = []
         for e in jdata['QualitiesAffected']:
             self.effects.append(Effect(e))
