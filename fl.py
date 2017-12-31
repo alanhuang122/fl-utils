@@ -37,8 +37,8 @@ class Storylet: #done?
     def __init__(self, jdata, shallow=False):
         global data
         self.raw = jdata
-        self.title = jdata['Name']
-        self.desc = jdata['Description']
+        self.title = jdata.get('Name', '(no name)')
+        self.desc = jdata.get('Description', '(no description)')
         self.id = jdata['Id']
         try:
             self.setting = Setting.get(jdata['Setting']['Id'])
@@ -280,34 +280,34 @@ def sub_qualities(string):
     return string
 
 class Effect:   #done: Priority goes 3/2/1/0
-    def __init__(self, effect, costs=None):
-        self.raw = effect
-        self.quality = Quality.get(effect['AssociatedQuality']['Id'])
-        self.equip = u'ForceEquip' in effect
+    def __init__(self, jdata, costs=None):
+        self.raw = jdata
+        self.quality = Quality.get(jdata['AssociatedQuality']['Id'])
+        self.equip = u'ForceEquip' in jdata
         try:
-            self.amount = effect['Level']
+            self.amount = jdata['Level']
         except:
             try:
-                self.amount = sub_qualities(effect['ChangeByAdvanced'])
+                self.amount = sub_qualities(jdata['ChangeByAdvanced'])
             except KeyError:
                 pass
         try:
-            self.setTo = effect['SetToExactly']
+            self.setTo = jdata['SetToExactly']
         except:
             try:
-                self.setTo = sub_qualities(effect['SetToExactlyAdvanced'])
+                self.setTo = sub_qualities(jdata['SetToExactlyAdvanced'])
             except KeyError:
                 pass
         try:
-            self.ceil = effect['OnlyIfNoMoreThan']
+            self.ceil = jdata['OnlyIfNoMoreThan']
         except KeyError:
             pass
         try:
-            self.floor = effect['OnlyIfAtLeast']
+            self.floor = jdata['OnlyIfAtLeast']
         except KeyError:
             pass
         try:
-            self.priority = effect['Priority']
+            self.priority = jdata['Priority']
         except KeyError:
             self.priority = 0
     def __repr__(self):
@@ -321,6 +321,8 @@ class Effect:   #done: Priority goes 3/2/1/0
                     limits = u' only if at least {}'.format(self.floor)
                 except:
                     limits = u''
+        if self.equip:
+            limits += u' (force equipped)'
                 
         try:
             if hasattr(self.quality, 'leveldesc') and isinstance(self.setTo, int):
@@ -425,10 +427,6 @@ class Quality:
         self.id = jdata['Id']
         self.desc = jdata.get('Description', u'(no description)')
         self.pyramid = u'UsePyramidNumbers' in jdata
-        try:
-            self.desc += u'\n' + jdata['LevelDescriptionText']
-        except KeyError:
-            pass
         self.nature = jdata.get('Nature', 1) #1: quality; 2: item
         try:
             qldstr = jdata['ChangeDescriptionText']
@@ -536,7 +534,7 @@ class Area:
         except AttributeError:
             pass
         if self.premium:
-            string += u'\n Requires Exceptional Friendship'
+            string += u'\nRequires Exceptional Friendship'
         string += u'\n{}'.format(self.message)
         return string.encode('utf-8')
     @classmethod
