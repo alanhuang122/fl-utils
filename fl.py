@@ -551,7 +551,7 @@ class Act:  #for social actions
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Act(data[id])
+            cache[key] = Act(data[key])
             return cache[key]
 
 class AccessCode:
@@ -578,3 +578,96 @@ class AccessCode:
     def list_effects(self):
         if self.effects != []:
             return u'[{}]'.format(u', '.join([unicode(e) for e in self.effects]))
+
+class Exchange:
+    def __init__(self, jdata):
+        self.raw = jdata
+        self.id = jdata.get('Id')
+        self.name = jdata.get('Name', '(no name)')
+        self.title = jdata.get('Title', '(no title)')
+        self.desc = jdata.get('Description', '(no description)')
+        self.shops = []
+        for x in jdata.get('Shops', []):
+            self.shops.append(Shop(x))
+    
+    def __repr__(self):
+        return u'Exchange Title: {} (ID {})'.format(self.title, self.id)
+    
+    def __unicode__(self):
+        return u'Exchange Name: {} (ID {})\nExchange Title: {}\nExchange Description: {}\nShops:\n{}'.format(self.name, self.id, self.title, self.desc, '\n'.join([s.name for s in self.shops]))
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    
+    @classmethod
+    def get(self, id):
+        key = u'exchanges:{}'.format(id)
+        if key in cache:
+            return cache[key]
+        else:
+            cache[key] = Exchange(data[key])
+            return cache[key]
+
+class Shop:
+    def __init__(self, jdata):
+        self.raw = jdata
+        self.id = jdata.get('Id')
+        self.name = jdata.get('Name', '(no name)')
+        self.desc = jdata.get('Description', '(no description)')
+        self.image = jdata.get('Image')
+        self.requirements = []
+        for r in jdata.get('QualitiesRequired', []):
+            self.requirements.append(Requirement(r))
+        self.offerings = {}
+        for item in jdata.get('Availabilities'):
+            i = Offering(item)
+            self.offerings[i.item.name] = i
+
+    def __repr__(self):
+        return u'Shop Name: {}'.format(self.name)
+
+    def __unicode__(self):
+        return u'Shop Name: {}\nDescription: {}\nItems: [{}]'.format(self.name, self.desc, ', '.join(self.offerings.keys()))
+
+    def __str__(self):
+        return unicode(self).format('utf-8')
+
+    def __getitem__(self, key):
+        return self.offerings[key]
+
+class Offering:
+    def __init__(self, jdata):
+        self.raw = jdata
+        self.id = jdata.get('Id')
+        self.item = Quality.get(jdata.get('Quality', {}).get('Id'))
+        self.price = Quality.get(jdata.get('PurchaseQuality', {}).get('Id'))
+        self.buymessage = jdata.get('BuyMessage', u'(no message)')
+        self.sellmessage = jdata.get('SellMessage', u'(no message)')
+        if 'Cost' in jdata:
+            self.buy = (jdata.get('Cost'), self.price)
+        if 'SellPrice' in jdata:
+            self.sell = (jdata.get('SellPrice'), self.price)
+
+    def __repr__(self):
+        return u'Item: {}'.format(self.item.name)
+
+    def __unicode__(self):
+        string = u'Item: {}'.format(self.item.name)
+        try:
+            string += u'\nBuy for {0[0]} x {0[1].name}'.format(self.buy)
+            if self.buymessage != u'(no message)':
+                string += u' - Buy Message: "{}"'.format(self.buymessage)
+        except AttributeError:
+            if self.buymessage != u'(no message)':
+                string += u'\nBuy Message: "{}" (cannot be bought)'.format(self.buymessage)
+        try:
+            string += u'\nSell for {0[0]} x {0[1].name}'.format(self.sell)
+            if self.sellmessage != u'(no message)':
+                string += u' - Sell Message: "{}"'.format(self.sellmessage)
+        except AttributeError:
+            if self.sellmessage != u'(no message)':
+                string += u'\nSell Message: "{}" (cannot be sold)'.format(self.sellmessage)
+        return string
+
+    def __str__(self):
+        return unicode(self).format('utf-8')
