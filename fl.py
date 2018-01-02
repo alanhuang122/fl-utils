@@ -630,7 +630,7 @@ class Shop:
         return u'Shop Name: {}\nDescription: {}\nItems: [{}]'.format(self.name, self.desc, ', '.join(self.offerings.keys()))
 
     def __str__(self):
-        return unicode(self).format('utf-8')
+        return unicode(self).encode('utf-8')
 
     def __getitem__(self, key):
         return self.offerings[key]
@@ -642,7 +642,11 @@ class Offering:
         self.item = Quality.get(jdata.get('Quality', {}).get('Id'))
         self.price = Quality.get(jdata.get('PurchaseQuality', {}).get('Id'))
         self.buymessage = jdata.get('BuyMessage', u'(no message)')
+        if not self.buymessage.replace('"',''):
+            self.buymessage = u'(no message)'
         self.sellmessage = jdata.get('SellMessage', u'(no message)')
+        if not self.sellmessage.replace('"',''):
+            self.sellmessage = u'(no message)'
         if 'Cost' in jdata:
             self.buy = (jdata.get('Cost'), self.price)
         if 'SellPrice' in jdata:
@@ -656,18 +660,18 @@ class Offering:
         try:
             string += u'\nBuy for {0[0]} x {0[1].name}'.format(self.buy)
             if self.buymessage != u'(no message)':
-                string += u' - Buy Message: "{}"'.format(self.buymessage)
+                string += u' - Buy Message: {}'.format(self.buymessage)
         except AttributeError:
             if self.buymessage != u'(no message)':
-                string += u'\nBuy Message: "{}" (cannot be bought)'.format(self.buymessage)
+                string += u'\nBuy Message: {} (cannot be bought)'.format(self.buymessage)
         try:
             string += u'\nSell for {0[0]} x {0[1].name}'.format(self.sell)
             if self.sellmessage != u'(no message)':
-                string += u' - Sell Message: "{}"'.format(self.sellmessage)
+                string += u' - Sell Message: {}'.format(self.sellmessage)
         except AttributeError:
             if self.sellmessage != u'(no message)':
-                string += u'\nSell Message: "{}" (cannot be sold)'.format(self.sellmessage)
+                string += u'\nSell Message: {} (cannot be sold)'.format(self.sellmessage)
         return string
 
     def __str__(self):
-        return unicode(self).format('utf-8')
+        return unicode(self).encode('utf-8')
