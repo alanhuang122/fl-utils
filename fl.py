@@ -271,7 +271,7 @@ class Storylet: #done?
                 self.branches.append(branch)
                 for e in branch.events.items():
                     if e[0].endswith('Event'):
-                        e[1].parent = b
+                        e[1].parent = branch
 
     def __repr__(self):
         return u'{}: "{}"'.format(self.type, self.title)
@@ -283,7 +283,7 @@ class Storylet: #done?
         self.title,
         render_html(self.desc),
         render_requirements(self.requirements, None),
-        u'\n{}\n\n'\
+        u'\n\n{}\n\n'\
                 .format(u'~' * 20)\
                 .join(self.render_branches()))\
     
@@ -380,8 +380,15 @@ class Event:    #done
         self.lodging = jdata.get('MoveToDomicile', {}).get('Id')
         self.livingstory = jdata.get('LivingStory', {}).get('Id')
         self.img = jdata.get('Image')
-        self.newsetting = jdata.get('SwitchToSettingId')
-        self.newarea = jdata.get('MoveToArea')
+        assert jdata.get('SwitchToSettingId') == jdata.get('SwitchToSetting', {}).get('Id')
+        try:
+            self.newsetting = Setting.get(jdata.get('SwitchToSettingId'))
+        except:
+            self.newsetting = None
+        try:
+            self.newarea = Area.get(jdata.get('MoveToArea', {}).get('Id'))
+        except:
+            self.newarea = None
         try:
             self.linkedevent = Storylet.get(jdata['LinkToEvent']['Id'])
         except KeyError:
@@ -397,27 +404,27 @@ class Event:    #done
         return unicode(self).encode('utf-8')
     
     def list_effects(self):
-        string = u''
+        effects = []
         if self.effects != []:
-            string += u'[{}]\n'.format(u', '.join([unicode(e) for e in self.effects]))
+            effects.append(u'[{}]'.format(u', '.join([unicode(e) for e in self.effects])))
         if self.exotic_effect:
-            string += u'Exotic effect: {}\n'.format(self.exotic_effect)
+            effects.append(u'Exotic effect: {}'.format(self.exotic_effect))
         if self.livingstory:
-            string += u'Triggers Living Story: {}\n'.format(self.livingstory) #todo make Livingstory class
+            effects.append(u'Triggers Living Story: {}'.format(self.livingstory)) #todo make Livingstory class
         if self.lodging:
-            string += u'Move to lodging: {}\n'.format(self.lodging) #todo make lodgings class
+            effects.append(u'Move to lodging: {}'.format(self.lodging)) #todo make lodgings class
         if self.newsetting:
-            string += u'Move to new setting: {}\n'.format(self.newsetting) #todo flesh out setting class
+            effects.append(u'Move to new setting: {}'.format(self.newsetting)) #todo flesh out setting class
         if self.newarea:
-            string += u'Move to new area: {}\n'.format(self.newarea)
+            effects.append(u'Move to new area: {}'.format(self.newarea))
         try:
             if self.parent.act:
-                string += u'Associated social action: {}\n'.format(self.parent.act)
+                effects.append(u'Associated social action: {}'.format(self.parent.act))
         except:
             pass
         if self.linkedevent:
-            string += u'Linked event: "{}" (Id {})\n'.format(self.linkedevent.title, self.linkedevent.id)
-        return string
+            effects.append(u'Linked event: "{}" (Id {})'.format(self.linkedevent.title, self.linkedevent.id))
+        return '\n'.join(effects)
         
     @classmethod
     def get(self, jdata, costs):
@@ -528,6 +535,9 @@ class Setting:  #definition unclear
         self.raw = jdata
         self.title = jdata['Name']
         description = jdata['StartingArea']['Description']
+
+    def __repr__(self):
+        return self.title
 
     @classmethod
     def get(self, id):
