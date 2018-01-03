@@ -244,7 +244,6 @@ def render_requirements(rl, fate):
 
 class Storylet: #done?
     def __init__(self, jdata, shallow=False):
-        global data
         self.raw = jdata
         self.title = jdata.get('Name', '(no name)')
         self.desc = jdata.get('Description', '(no description)')
@@ -295,7 +294,6 @@ class Storylet: #done?
     
     @classmethod
     def get(self, id):
-        global cache
         key = u'storylets:{}'.format(id)
         if key in cache:
             return cache[key]
@@ -336,8 +334,8 @@ class Branch:   #done
     def __unicode__(self):
         string = u'Branch Title: "{}"'.format(self.title)
         if self.desc:
-            string += '\nDescription: {}'.format(render_html(self.desc))
-        string += '\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
+            string += u'\nDescription: {}'.format(render_html(self.desc))
+        string += u'\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
         if self.cost != 1:
             string += u'\nAction cost: {}'.format(self.cost)
         string += u'\n{}'.format(render_events(self.events))
@@ -348,7 +346,6 @@ class Branch:   #done
     
     @classmethod
     def get(self, jdata, parent=None):
-        global cache
         key = u'branches:{}'.format(jdata['Id'])
         if key in cache:
             return cache[key]
@@ -428,7 +425,6 @@ class Event:    #done
         
     @classmethod
     def get(self, jdata, costs):
-        global cache
         key = u'events:{}'.format(jdata['Id'])
         if key in cache:
             return cache[key]
