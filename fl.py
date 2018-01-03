@@ -334,7 +334,14 @@ class Branch:   #done
         return u'"{}"'.format(self.title)
     
     def __unicode__(self):
-        return u'Branch Title: "{}"\nDescription: {}\nRequirements: {}\n{}'.format(self.title, render_html(self.desc) if self.desc is not None else '', render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None), render_events(self.events))
+        string = u'Branch Title: "{}"'.format(self.title)
+        if self.desc:
+            string += '\nDescription: {}'.format(render_html(self.desc))
+        string += '\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
+        if self.cost != 1:
+            string += u'\nAction cost: {}'.format(self.cost)
+        string += u'\n{}'.format(render_events(self.events))
+        return string
     
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -402,7 +409,7 @@ class Event:    #done
         if self.newsetting:
             string += u'Move to new setting: {}\n'.format(self.newsetting) #todo flesh out setting class
         if self.newarea:
-            string += u'Move to new area: {}\n'.format(self.newarea.movemessage)
+            string += u'Move to new area: {}\n'.format(self.newarea)
         try:
             if self.parent.act:
                 string += u'Associated social action: {}\n'.format(self.parent.act)
