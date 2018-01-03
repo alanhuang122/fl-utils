@@ -15,8 +15,8 @@ categories = {0:        'Unspecified',
               160:      'Advantage',
               170:      'Document',
               200:      'Goods',
-              1000:     'BasicAbility',
-              2000:     'SpecificAbility',
+              1000:     'Basic Ability',
+              2000:     'Specific Ability',
               3000:     'Profession',
               5000:     'Story',
               5001:     'Intrigue',
@@ -35,11 +35,11 @@ categories = {0:        'Unspecified',
               8000:     'Route',
               9000:     'Seasonal',
               10000:    'Ship',
-              11000:    'ConstantCompanion',
+              11000:    'Constant Companion',
               12000:    'Club',
               13000:    'Affiliation',
               14000:    'Transportation',
-              15000:    'HomeComfort',
+              15000:    'Home Comfort',
               16000:    'Academic',
               17000:    'Cartography',
               18000:    'Contraband',
@@ -51,17 +51,17 @@ categories = {0:        'Unspecified',
               23000:    'Luminosity',
               24000:    'Mysteries',
               25000:    'Nostalgia',
-              26000:    'RagTrade',
+              26000:    'Rag Trade',
               27000:    'Ratness',
               28000:    'Rumour',
               29000:    'Legal',
-              30000:    'WildWords',
+              30000:    'Wild Words',
               31000:    'Wines',
               32000:    'Rubbery',
-              33000:    'SidebarAbility',
-              34000:    'MajorLateral',
+              33000:    'Sidebar Ability',
+              34000:    'Major Lateral',
               35000:    'Quest',
-              36000:    'MinorLateral',
+              36000:    'Minor Lateral',
               37000:    'Circumstance',
               39000:    'Avatar',
               40000:    'Objective',
@@ -69,8 +69,8 @@ categories = {0:        'Unspecified',
               50000:    'Knowledge',
               60000:    'Destiny',
               70000:    'Modfier',
-              70001:    'GreatGame',
-              70002:    'ZeeTreasures',
+              70001:    'Great Game',
+              70002:    'Zee Treasures',
               70003:    'Sustenance'
 }
 
@@ -203,25 +203,30 @@ class Requirement:  #done
             self.test_type = self.quality.test_type
         else:
             self.type = u'Requirement'
-        self.visibility = jdata.get('BranchVisibleWhenRequirementFailed')
+        assert jdata.get('BranchVisibleWhenRequirementFailed') == jdata.get('VisibleWhenRequirementFailed')
+        self.visibility = jdata.get('BranchVisibleWhenRequirementFailed', False)
 
     def __repr__(self):
+        string = u''
+        if not self.visibility:
+            string += u'[Branch hidden if failed] '
         if self.type == u'Challenge':
             if self.quality.id == 432:
-                return u'Luck: {}% chance'.format(50 - self.difficulty * 10)
+                string += u'Luck: {}% chance'.format(50 - self.difficulty * 10)
             else:
-                return u'{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
+                string += u'{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
         else:
             try:
                 if self.lower_bound == self.upper_bound:
-                    return u'{} exactly {}'.format(self.quality.name, self.lower_bound)
+                    string += u'{} exactly {}'.format(self.quality.name, self.lower_bound)
                 else:
-                    return u'{} [{}-{}]'.format(self.quality.name, self.lower_bound, self.upper_bound)
+                    string += u'{} [{}-{}]'.format(self.quality.name, self.lower_bound, self.upper_bound)
             except:
                 try:
-                    return u'{} at least {}'.format(self.quality.name, self.lower_bound)
+                    string += u'{} at least {}'.format(self.quality.name, self.lower_bound)
                 except:
-                    return u'{} no more than {}'.format(self.quality.name, self.upper_bound)
+                    string += u'{} no more than {}'.format(self.quality.name, self.upper_bound)
+        return string
 
 def render_requirements(rl, fate):
     reqs = []
