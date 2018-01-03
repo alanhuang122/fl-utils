@@ -127,9 +127,11 @@ class Quality:
                 self.enhancements.append('{:+} {}'.format(x['Level'], Quality.get(x['AssociatedQuality']['Id']).name))
         except KeyError:
             pass
+
     def __repr__(self):
         return u'Quality: {}'.format(self.name)
-    def __str__(self):
+
+    def __unicode__(self):
         string = u'Quality: {}'.format(self.name)
         try:
             string += u'\nCategory: {}'.format(self.category)
@@ -140,7 +142,10 @@ class Quality:
                 string += u'\nEnhancements: [{}]'.format(', '.join(self.enhancements))
         except AttributeError:
             pass
-        return string.encode('utf-8')
+        return string
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
             
     @classmethod
     def get(self, id):
@@ -199,6 +204,7 @@ class Requirement:  #done
         else:
             self.type = u'Requirement'
         self.visibility = jdata.get('BranchVisibleWhenRequirementFailed')
+
     def __repr__(self):
         if self.type == u'Challenge':
             if self.quality.id == 432:
@@ -261,9 +267,11 @@ class Storylet: #done?
                 for e in branch.events.items():
                     if e[0].endswith('Event'):
                         e[1].parent = b
+
     def __repr__(self):
         return u'{}: "{}"'.format(self.type, self.title)
-    def __str__(self):
+
+    def __unicode__(self):
         #_,c = os.popen('stty size', u'r').read().split()
         return u'{} Title: "{}"\nDescription: {}\nRequirements: {}\nBranches:\n{}'.format(
         self.type,
@@ -273,9 +281,13 @@ class Storylet: #done?
         u'\n{}\n\n'\
                 .format(u'~' * 20)\
                 .join(self.render_branches()))\
-                .encode('utf-8')
+    
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+    
     def render_branches(self):
-        return [str(b).decode('utf-8') for b in self.branches]
+        return [unicode(b) for b in self.branches]
+    
     @classmethod
     def get(self, id):
         global cache
@@ -312,10 +324,16 @@ class Branch:   #done
                     self.events[key] = jdata[key]
                 else:
                     self.events[key] = Event.get(jdata[key], costs)
+    
     def __repr__(self):
         return u'"{}"'.format(self.title)
+    
+    def __unicode__(self):
+        return u'Branch Title: "{}"\nDescription: {}\nRequirements: {}\n{}'.format(self.title, render_html(self.desc) if self.desc is not None else '', render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None), render_events(self.events))
+    
     def __str__(self):
-        return u'Branch Title: "{}"\nDescription: {}\nRequirements: {}\n{}'.format(self.title, render_html(self.desc) if self.desc is not None else '', render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None), render_events(self.events)).encode('utf-8')
+        return unicode(self).encode('utf-8')
+    
     @classmethod
     def get(self, jdata, parent=None):
         global cache
@@ -356,10 +374,16 @@ class Event:    #done
             self.linkedevent = Storylet.get(jdata['LinkToEvent']['Id'])
         except KeyError:
             self.linkedevent = None
+    
     def __repr__(self):
         return u'Event: {}'.format(self.title) if self.title != u'' else u'Event: (no title)'
+    
+    def __unicode__(self):
+        return u'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != u'' else u'(no title)', render_html(self.desc), self.list_effects())
+    
     def __str__(self):
-        return u'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != u'' else u'(no title)', render_html(self.desc), self.list_effects()).encode('utf-8')
+        return unicode(self).encode('utf-8')
+    
     def list_effects(self):
         string = u''
         if self.effects != []:
@@ -373,7 +397,7 @@ class Event:    #done
         if self.newsetting:
             string += u'Move to new setting: {}\n'.format(self.newsetting) #todo flesh out setting class
         if self.newarea:
-            string += u'Move to new area: {}\n'.format(self.newarea)
+            string += u'Move to new area: {}\n'.format(self.newarea.movemessage)
         try:
             if self.parent.act:
                 string += u'Associated social action: {}\n'.format(self.parent.act)
@@ -448,6 +472,7 @@ class Effect:   #done: Priority goes 3/2/1/0
             self.priority = jdata['Priority']
         except KeyError:
             self.priority = 0
+
     def __repr__(self):
         try:
             limits = u' if no more than {} and at least {}'.format(self.ceil, self.floor)
@@ -498,7 +523,7 @@ class Setting:  #definition unclear
         if key in cache:
             return cache[key]
         else:
-            cache[key] = Setting(data[id])
+            cache[key] = Setting(data[key])
             return cache[key]
 
 class Area:
@@ -515,9 +540,11 @@ class Area:
             pass
         self.premium = 'PremiumSubRequired' in jdata
         self.message = jdata.get('MoveMessage', '(no move message)')
+
     def __repr__(self):
         return u'{} (Id {})'.format(self.name, self.id)
-    def __str__(self):
+
+    def __unicode__(self):
         string = u'{} (Id {})'.format(self.name, self.id)
         string += u'\nDescription: {}'.format(self.desc)
         string += u'\nOpportunity cards are ' + (u'' if self.showOps else u'NOT ') + u'visible'
@@ -528,7 +555,11 @@ class Area:
         if self.premium:
             string += u'\nRequires Exceptional Friendship'
         string += u'\n{}'.format(self.message)
-        return string.encode('utf-8')
+        return string
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
     @classmethod
     def get(self, id):
         key = u'areas:{}'.format(id)
@@ -543,8 +574,10 @@ class Act:  #for social actions
         self.raw = jdata
         self.name = jdata['Name']
         self.msg = jdata['InviteMessage']
+    
     def __repr__(self):
         return u'"{}"'.format(self.name)
+    
     @classmethod
     def get(self, id):
         key = u'acts:{}'.format(id)
@@ -563,21 +596,26 @@ class AccessCode:
         self.effects = []
         for e in jdata['QualitiesAffected']:
             self.effects.append(Effect(e))
+    
     def __repr__(self):
         string = u'Access code name: {}'.format(self.name)
         string += u'\nInitial message: {}'.format(self.message1)
         string += u'\nFinish message: {}'.format(self.message2)
         string += u'\nEffects: {}'.format(self.list_effects())
-        return string.encode('utf-8')
-    def __unicode__(self):
-        string = u'Access code name: {}'.format(self.name)
-        string += u'\nInitial message: {}'.format(self.message1)
-        string += u'\nFinish message: {}'.format(self.message2)
-        string += u'\nEffects: {}'.format(self.list_effects())
         return string
+    
     def list_effects(self):
         if self.effects != []:
             return u'[{}]'.format(u', '.join([unicode(e) for e in self.effects]))
+
+    @classmethod
+    def get(self, id):
+        key = 'accesscodes:{}'.format(id)
+        if key in cache:
+            return cache[key]
+        else:
+            cache[key] = AccessCode(data[key])
+            return cache[key]
 
 class Exchange:
     def __init__(self, jdata):
