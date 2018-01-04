@@ -454,7 +454,7 @@ def render_events(ed):
         strings.append(u'Rare {}: "{}" ({}% chance)\n{}\nEffects: {}'.format('Failure' if len(strings) > 1 else 'Success', rfe.title, ed['RareDefaultEventChance'], render_html(rfe.desc), rfe.list_effects()))
     except KeyError:
         pass
-    return '\n{}\n\n'.format('-' * 20).join(strings)
+    return '\n\n{}\n\n'.format('-' * 20).join(strings)
 
 class Effect:   #done: Priority goes 3/2/1/0
     def __init__(self, jdata, costs=None):
@@ -525,12 +525,66 @@ class Effect:   #done: Priority goes 3/2/1/0
                     return u'{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
                 except:
                     return u'{} ({} cp{})'.format(self.quality.name, u'' if self.amount.startswith('-') else u'' + self.amount, limits)
-                    
+        
+class Lodging:
+    def __init__(self, jdata):
+        self.raw = jdata
+        self.id = jdata.get('Id')
+        self.name = jdata.get('Name', '(no name)')
+        self.desc = render_html(jdata.get('Description', '(no description)'))
+        self.image = jdata.get('ImageName')
+        self.hand = jdata.get('MaxHandSize')
+
+    def __repr__(self):
+        return self.name
+
+    def __unicode__(self):
+        string = u'Lodging: {} (Id {})'.format(self.name, self.id)
+        string += u'\nDescription: {}'.format(self.desc)
+        if not self.hand:
+            string += u'\nHand size: None'
+        elif self.hand == 1:
+            string += u'\nHand size: 1 card'
+        else:
+            string += u'\nHand size: {}'.format(u'{} cards'.format(self.hand) if self.hand else u'N/A')
+        return string
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    @classmethod
+    def get(self, id):
+        key = u'domiciles:{}'.format(id)
+        if key in cache:
+            return cache[key]
+        else:
+            cache[key] = Lodging(data[key])
+            return cache[key]
+
 class Setting:  #definition unclear
     def __init__(self, jdata):
         self.raw = jdata
-        self.title = jdata['Name']
-        description = jdata['StartingArea']['Description']
+        self.id = jdata.get('Id')
+        self.title = jdata.get('Name')
+        self.persona = jdata.get('Personae')
+        self.maxactions = jdata.get('MaxActionsAllowed')
+        self.exhaustion = jdata.get('ActionsInPeriodBeforeExhaustion')
+        self.turnlength = jdata.get('TurnLengthSeconds')
+
+        self.area = jdata.get('StartingArea', {}).get('Id')
+        if self.area:
+            assert jdata.get('StartingArea') == data['areas:{}'.format(self.area)]
+            self.area = Area(self.area)
+
+        self.domicile = jdata.get('StartingDomicile')
+        if self.domicile:
+            self.domicile = Lodging(self.domicile)
+
+        self.exchange = jdata.get('Exchange')
+        if self.exchange:
+            self.exchange = fl.Exchange(self.exchange)
+        
+        self.items = 'ItemsUsableHere' in jdata
 
     def __repr__(self):
         return self.title
@@ -680,7 +734,7 @@ class Shop:
             self.offerings[i.item.name] = i
 
     def __repr__(self):
-        return u'Shop Name: {}'.format(self.name)
+        return self.name
 
     def __unicode__(self):
         return u'Shop Name: {}\nDescription: {}\nItems: [{}]'.format(self.name, self.desc, ', '.join(self.offerings.keys()))
