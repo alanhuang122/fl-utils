@@ -561,7 +561,7 @@ class Lodging:
             cache[key] = Lodging(data[key])
             return cache[key]
 
-class Setting:  #definition unclear
+class Setting:
     def __init__(self, jdata):
         self.raw = jdata
         self.id = jdata.get('Id')
@@ -574,20 +574,32 @@ class Setting:  #definition unclear
         self.area = jdata.get('StartingArea', {}).get('Id')
         if self.area:
             assert jdata.get('StartingArea') == data['areas:{}'.format(self.area)]
-            self.area = Area(self.area)
+            self.area = Area.get(self.area)
 
         self.domicile = jdata.get('StartingDomicile')
         if self.domicile:
             self.domicile = Lodging(self.domicile)
 
-        self.exchange = jdata.get('Exchange')
-        if self.exchange:
-            self.exchange = fl.Exchange(self.exchange)
+#        self.exchange = jdata.get('Exchange')
+#        if self.exchange:
+#            self.exchange = Exchange(self.exchange)
         
         self.items = 'ItemsUsableHere' in jdata
 
     def __repr__(self):
         return self.title
+
+    def __unicode__(self):
+        string = u'Setting name: {} (Id {})'.format(self.title, self.id)
+        if self.area:
+            string += u'\nStarting area: {}'.format(self.area)
+        if self.domicile:
+            string += u'\nStarting lodging: {}'.format(self.domicile)
+        string += u'\nItems are {}usable here'.format(u'' if self.items else u'NOT ')
+        return string
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
 
     @classmethod
     def get(self, id):
