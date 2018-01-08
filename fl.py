@@ -80,14 +80,10 @@ parser = HTMLParser()
 def render_html(string):
     string = re.sub(r'<.{,2}?br.{,2}?>',u'\n', string)
     string = re.sub(r'<.{,2}?[pP].{,2}?>',u'', string)
-    string = string.replace('<em>', '_')
-    string = string.replace('<i>', '_')
-    string = string.replace('</em>', '_')
-    string = string.replace('</i>', '_')
-    string = string.replace('<strong>', '\x1B[1m*')
-    string = string.replace('</strong>', '*\x1B[0m')
-    string = string.replace('<b>', '\x1B[1m*')
-    string = string.replace('</b>', '*\x1B[0m')
+    string = re.sub('</?em>', '_', string)
+    string = re.sub('</?i>', '_', string)
+    string = re.sub('</?strong>', '*', string)
+    string = re.sub('</?b>', '*', string)
     return string
 
 class Quality:
@@ -256,7 +252,7 @@ class Storylet: #done?
         except KeyError:
             self.setting = None
         try:
-            self.area = Area.get(jdata['LimitedToArea'])
+            self.area = Area.get(jdata['LimitedToArea']['Id'])
         except KeyError:
             self.area = None
         self.type = 'Storylet' if jdata['Deck']['Name'] == 'Always' else 'Card' if jdata['Deck']['Name'] == 'Sometimes' else 'Unknown type'
@@ -280,14 +276,19 @@ class Storylet: #done?
 
     def __unicode__(self):
         #_,c = os.popen('stty size', u'r').read().split()
-        return u'{} Title: "{}"\nDescription: {}\nRequirements: {}\nBranches:\n{}'.format(
-        self.type,
-        self.title,
-        render_html(self.desc),
-        render_requirements(self.requirements, None),
-        u'\n\n{}\n\n'\
-                .format(u'~' * 20)\
-                .join(self.render_branches()))\
+        string = u'{} Title: "{}"\n'.format(self.type, self.title)
+        try:
+            string += u'Appears in {} '.format(self.setting.title)
+        except AttributeError:
+            pass
+        try:
+            string += u'Limited to area: {}'.format(self.area.name)
+        except AttributeError:
+            pass
+        string += u'\nDescription: {}'.format(render_html(self.desc))
+        string += u'\nRequirements: {}'.format(render_requirements(self.requirements, None))
+        string += u'\nBranches:\n{}'.format(u'\n\n{}\n\n'.format(u'~' * 20).join(self.render_branches()))
+        return string
     
     def __str__(self):
         return unicode(self).encode('utf-8')
