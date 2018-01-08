@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 import json, re
+from HTMLParser import HTMLParser
 cache = {}
 data = {}
 categories = {0:        'Unspecified',
@@ -73,6 +74,8 @@ categories = {0:        'Unspecified',
               70002:    'Zee Treasures',
               70003:    'Sustenance'
 }
+
+parser = HTMLParser()
 
 def render_html(string):
     string = re.sub(r'<.{,2}?br.{,2}?>',u'\n', string)
@@ -245,7 +248,7 @@ def render_requirements(rl, fate):
 class Storylet: #done?
     def __init__(self, jdata, shallow=False):
         self.raw = jdata
-        self.title = jdata.get('Name', '(no name)')
+        self.title = parser.unescape(jdata.get('Name', '(no name)'))
         self.desc = jdata.get('Description', '(no description)')
         self.id = jdata['Id']
         try:
@@ -305,7 +308,7 @@ class Storylet: #done?
 class Branch:   #done
     def __init__(self, jdata, parent):
         self.raw = jdata
-        self.title = jdata.get('Name', u'(no title)')
+        self.title = parser.unescape(jdata.get('Name', u'(no title)'))
         self.id = jdata['Id']
         self.parent = parent
         self.desc = jdata.get('Description', '(no description)')
@@ -358,7 +361,7 @@ class Event:    #done
         self.raw = jdata
         self.id = jdata['Id']
         self.parent = None        
-        self.title = jdata.get('Name', '(no title)')
+        self.title = parser.unescape(jdata.get('Name', '(no title)'))
         self.desc = jdata.get('Description', '(no description)')
         self.category = jdata.get('Category')
         self.effects = []
