@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 import json, re
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 cache = {}
 data = {}
 categories = {0:        'Unspecified',
@@ -78,8 +78,8 @@ categories = {0:        'Unspecified',
 parser = HTMLParser()
 
 def render_html(string):
-    string = re.sub(r'<.{,2}?br.{,2}?>',u'\n', string)
-    string = re.sub(r'<.{,2}?[pP].{,2}?>',u'', string)
+    string = re.sub(r'<.{,2}?br.{,2}?>','\n', string)
+    string = re.sub(r'<.{,2}?[pP].{,2}?>','', string)
     string = re.sub('</?em>', '_', string)
     string = re.sub('</?i>', '_', string)
     string = re.sub('</?strong>', '*', string)
@@ -90,10 +90,10 @@ class Quality:
     def __init__(self, jdata):
         #HimbleLevel is used to determine order within categories for items
         self.raw = jdata
-        self.name = jdata.get('Name', u'(no name)')
+        self.name = jdata.get('Name', '(no name)')
         self.id = jdata['Id']
-        self.desc = jdata.get('Description', u'(no description)')
-        self.pyramid = u'UsePyramidNumbers' in jdata
+        self.desc = jdata.get('Description', '(no description)')
+        self.pyramid = 'UsePyramidNumbers' in jdata
         self.nature = jdata.get('Nature', 1) #1: quality; 2: item
         try:
             qldstr = jdata['ChangeDescriptionText']
@@ -108,7 +108,7 @@ class Quality:
         try:
             variables = {}
             d = json.loads(jdata['VariableDescriptionText'])
-            for x in d.items():
+            for x in list(d.items()):
                 variables[x[0]] = parse_qlds(x[1])
             self.variables = variables
         except KeyError:
@@ -116,7 +116,7 @@ class Quality:
         self.cap = jdata.get('Cap')
         self.category = categories.get(jdata.get('Category'))
         self.tag = jdata.get('Tag')
-        self.test_type = u'Narrow' if u'DifficultyTestType' in jdata else u'Broad'
+        self.test_type = 'Narrow' if 'DifficultyTestType' in jdata else 'Broad'
         self.difficulty = jdata.get('DifficultyScaler')
         self.slot = jdata.get('AssignToSlot', {}).get('Id')
         self.event = jdata.get('UseEvent', {}).get('Id') #fix infinite loop
@@ -128,27 +128,24 @@ class Quality:
             pass
 
     def __repr__(self):
-        return u'Quality: {}'.format(self.name)
+        return 'Quality: {}'.format(self.name)
 
-    def __unicode__(self):
-        string = u'Quality: {}'.format(self.name)
+    def __str__(self):
+        string = 'Quality: {}'.format(self.name)
         try:
-            string += u'\nCategory: {}'.format(self.category)
+            string += '\nCategory: {}'.format(self.category)
         except AttributeError:
             pass
         try:
             if self.enhancements:
-                string += u'\nEnhancements: [{}]'.format(', '.join(self.enhancements))
+                string += '\nEnhancements: [{}]'.format(', '.join(self.enhancements))
         except AttributeError:
             pass
         return string
 
-    def __str__(self):
-        return unicode(self).encode('utf-8')
-            
     @classmethod
     def get(self, id):
-        key = u'qualities:{}'.format(id)
+        key = 'qualities:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -197,34 +194,34 @@ class Requirement:  #done
                 self.difficulty = sub_qualities(jdata['DifficultyAdvanced'])
             except KeyError:
                 pass
-        if hasattr(self, u'difficulty'):
-            self.type = u'Challenge'
+        if hasattr(self, 'difficulty'):
+            self.type = 'Challenge'
             self.test_type = self.quality.test_type
         else:
-            self.type = u'Requirement'
+            self.type = 'Requirement'
         assert jdata.get('BranchVisibleWhenRequirementFailed') == jdata.get('VisibleWhenRequirementFailed')
         self.visibility = jdata.get('BranchVisibleWhenRequirementFailed', False)
 
     def __repr__(self):
-        string = u''
+        string = ''
         if not self.visibility:
-            string += u'[Branch hidden if failed] '
-        if self.type == u'Challenge':
+            string += '[Branch hidden if failed] '
+        if self.type == 'Challenge':
             if self.quality.id == 432:
-                string += u'Luck: {}% chance'.format(50 - self.difficulty * 10)
+                string += 'Luck: {}% chance'.format(50 - self.difficulty * 10)
             else:
-                string += u'{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
+                string += '{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
         else:
             try:
                 if self.lower_bound == self.upper_bound:
-                    string += u'{} exactly {}'.format(self.quality.name, self.lower_bound)
+                    string += '{} exactly {}'.format(self.quality.name, self.lower_bound)
                 else:
-                    string += u'{} [{}-{}]'.format(self.quality.name, self.lower_bound, self.upper_bound)
+                    string += '{} [{}-{}]'.format(self.quality.name, self.lower_bound, self.upper_bound)
             except:
                 try:
-                    string += u'{} at least {}'.format(self.quality.name, self.lower_bound)
+                    string += '{} at least {}'.format(self.quality.name, self.lower_bound)
                 except:
-                    string += u'{} no more than {}'.format(self.quality.name, self.upper_bound)
+                    string += '{} no more than {}'.format(self.quality.name, self.upper_bound)
         return string
 
 def render_requirements(rl, fate):
@@ -233,13 +230,13 @@ def render_requirements(rl, fate):
     if fate is not None:
         reqs.append('{} FATE'.format(fate))
     for r in rl:
-        if r.type == u'Requirement':
-            reqs.append(unicode(r))
+        if r.type == 'Requirement':
+            reqs.append(str(r))
         else:
-            challenges.append(unicode(r))
+            challenges.append(str(r))
     if not reqs and not challenges:
-        return u'None'
-    return u', '.join(reqs) + u'\n' + u'\n'.join(challenges)
+        return 'None'
+    return ', '.join(reqs) + '\n' + '\n'.join(challenges)
 
 class Storylet: #done?
     def __init__(self, jdata, shallow=False):
@@ -267,38 +264,35 @@ class Storylet: #done?
             for b in jdata['ChildBranches']:
                 branch=Branch.get(b, self)
                 self.branches.append(branch)
-                for e in branch.events.items():
+                for e in list(branch.events.items()):
                     if e[0].endswith('Event'):
                         e[1].parent = branch
 
     def __repr__(self):
-        return u'{}: "{}"'.format(self.type, self.title)
+        return '{}: "{}"'.format(self.type, self.title)
 
-    def __unicode__(self):
+    def __str__(self):
         #_,c = os.popen('stty size', u'r').read().split()
-        string = u'{} Title: "{}"\n'.format(self.type, self.title)
+        string = '{} Title: "{}"\n'.format(self.type, self.title)
         try:
-            string += u'Appears in {} '.format(self.setting.title)
+            string += 'Appears in {} '.format(self.setting.title)
         except AttributeError:
             pass
         try:
-            string += u'Limited to area: {}'.format(self.area.name)
+            string += 'Limited to area: {}'.format(self.area.name)
         except AttributeError:
             pass
-        string += u'\nDescription: {}'.format(render_html(self.desc))
-        string += u'\nRequirements: {}'.format(render_requirements(self.requirements, None))
-        string += u'\nBranches:\n{}'.format(u'\n\n{}\n\n'.format(u'~' * 20).join(self.render_branches()))
+        string += '\nDescription: {}'.format(render_html(self.desc))
+        string += '\nRequirements: {}'.format(render_requirements(self.requirements, None))
+        string += '\nBranches:\n{}'.format('\n\n{}\n\n'.format('~' * 20).join(self.render_branches()))
         return string
     
-    def __str__(self):
-        return unicode(self).encode('utf-8')
-    
     def render_branches(self):
-        return [unicode(b) for b in self.branches]
+        return [str(b) for b in self.branches]
     
     @classmethod
     def get(self, id):
-        key = u'storylets:{}'.format(id)
+        key = 'storylets:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -309,7 +303,7 @@ class Storylet: #done?
 class Branch:   #done
     def __init__(self, jdata, parent):
         self.raw = jdata
-        self.title = parser.unescape(jdata.get('Name', u'(no title)'))
+        self.title = parser.unescape(jdata.get('Name', '(no title)'))
         self.id = jdata['Id']
         self.parent = parent
         self.desc = jdata.get('Description', '(no description)')
@@ -325,32 +319,29 @@ class Branch:   #done
             self.requirements.append(Requirement(r))
         costs = [ {'AssociatedQuality': {'Id': r.quality.id}, 'Level': -r.lower_bound} for r in self.requirements if r.is_cost ]
         self.events = {}
-        for key in jdata.keys():
-            if key in ['DefaultEvent', u'SuccessEvent', u'RareSuccessEvent', u'RareSuccessEventChance', u'RareDefaultEvent', u'RareDefaultEventChance']:
+        for key in list(jdata.keys()):
+            if key in ['DefaultEvent', 'SuccessEvent', 'RareSuccessEvent', 'RareSuccessEventChance', 'RareDefaultEvent', 'RareDefaultEventChance']:
                 if key.endswith('Chance'):
                     self.events[key] = jdata[key]
                 else:
                     self.events[key] = Event.get(jdata[key], costs)
     
     def __repr__(self):
-        return u'"{}"'.format(self.title)
-    
-    def __unicode__(self):
-        string = u'Branch Title: "{}"'.format(self.title)
-        if self.desc:
-            string += u'\nDescription: {}'.format(render_html(self.desc))
-        string += u'\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
-        if self.cost != 1:
-            string += u'\nAction cost: {}'.format(self.cost)
-        string += u'\n{}'.format(render_events(self.events))
-        return string
+        return '"{}"'.format(self.title)
     
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        string = 'Branch Title: "{}"'.format(self.title)
+        if self.desc:
+            string += '\nDescription: {}'.format(render_html(self.desc))
+        string += '\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
+        if self.cost != 1:
+            string += '\nAction cost: {}'.format(self.cost)
+        string += '\n{}'.format(render_events(self.events))
+        return string
     
     @classmethod
     def get(self, jdata, parent=None):
-        key = u'branches:{}'.format(jdata['Id'])
+        key = 'branches:{}'.format(jdata['Id'])
         if key in cache:
             return cache[key]
         else:
@@ -372,7 +363,7 @@ class Event:    #done
         for e in jdata['QualitiesAffected']:
             self.effects.append(Effect(e))
         try:
-            if jdata['ExoticEffects'] != u'':
+            if jdata['ExoticEffects'] != '':
                 self.exotic_effect = jdata['ExoticEffects']
             else:
                 self.exotic_effect = None
@@ -396,40 +387,37 @@ class Event:    #done
             self.linkedevent = None
     
     def __repr__(self):
-        return u'Event: {}'.format(self.title) if self.title != u'' else u'Event: (no title)'
-    
-    def __unicode__(self):
-        return u'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != u'' else u'(no title)', render_html(self.desc), self.list_effects())
+        return 'Event: {}'.format(self.title) if self.title != '' else 'Event: (no title)'
     
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return 'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != '' else '(no title)', render_html(self.desc), self.list_effects())
     
     def list_effects(self):
         effects = []
         if self.effects != []:
-            effects.append(u'[{}]'.format(u', '.join([unicode(e) for e in self.effects])))
+            effects.append('[{}]'.format(', '.join([str(e) for e in self.effects])))
         if self.exotic_effect:
-            effects.append(u'Exotic effect: {}'.format(self.exotic_effect))
+            effects.append('Exotic effect: {}'.format(self.exotic_effect))
         if self.livingstory:
-            effects.append(u'Triggers Living Story: {}'.format(self.livingstory)) #todo make Livingstory class
+            effects.append('Triggers Living Story: {}'.format(self.livingstory)) #todo make Livingstory class
         if self.lodging:
-            effects.append(u'Move to lodging: {}'.format(self.lodging)) #todo make lodgings class
+            effects.append('Move to lodging: {}'.format(self.lodging)) #todo make lodgings class
         if self.newsetting:
-            effects.append(u'Move to new setting: {}'.format(self.newsetting)) #todo flesh out setting class
+            effects.append('Move to new setting: {}'.format(self.newsetting)) #todo flesh out setting class
         if self.newarea:
-            effects.append(u'Move to new area: {}'.format(self.newarea))
+            effects.append('Move to new area: {}'.format(self.newarea))
         try:
             if self.parent.act:
-                effects.append(u'Associated social action: {}'.format(self.parent.act))
+                effects.append('Associated social action: {}'.format(self.parent.act))
         except:
             pass
         if self.linkedevent:
-            effects.append(u'Linked event: "{}" (Id {})'.format(self.linkedevent.title, self.linkedevent.id))
+            effects.append('Linked event: "{}" (Id {})'.format(self.linkedevent.title, self.linkedevent.id))
         return '\n'.join(effects)
         
     @classmethod
     def get(self, jdata, costs):
-        key = u'events:{}'.format(jdata['Id'])
+        key = 'events:{}'.format(jdata['Id'])
         if key in cache:
             return cache[key]
         else:
@@ -440,22 +428,22 @@ def render_events(ed):
     strings = []
     try:
         se = ed['SuccessEvent']
-        strings.append( u'Success: "{}"\n{}\nEffects: {}'.format(se.title, render_html(se.desc), se.list_effects()))
+        strings.append( 'Success: "{}"\n{}\nEffects: {}'.format(se.title, render_html(se.desc), se.list_effects()))
     except KeyError:
         pass
     try:
         rse = ed['RareSuccessEvent']
-        strings.append(u'Rare Success: "{}" ({}% chance)\n{}\nEffects: {}'.format(rse.title, ed['RareSuccessEventChance'], render_html(rse.desc), rse.list_effects()))
+        strings.append('Rare Success: "{}" ({}% chance)\n{}\nEffects: {}'.format(rse.title, ed['RareSuccessEventChance'], render_html(rse.desc), rse.list_effects()))
     except KeyError:
         pass
     try:
         fe = ed['DefaultEvent']
-        strings.append(u'{}: "{}"\n{}\nEffects: {}'.format('Failure' if len(strings) > 0 else u'Event', fe.title, render_html(fe.desc), fe.list_effects()))
+        strings.append('{}: "{}"\n{}\nEffects: {}'.format('Failure' if len(strings) > 0 else 'Event', fe.title, render_html(fe.desc), fe.list_effects()))
     except KeyError:
         pass
     try:
         rfe = ed['RareDefaultEvent']
-        strings.append(u'Rare {}: "{}" ({}% chance)\n{}\nEffects: {}'.format('Failure' if len(strings) > 1 else 'Success', rfe.title, ed['RareDefaultEventChance'], render_html(rfe.desc), rfe.list_effects()))
+        strings.append('Rare {}: "{}" ({}% chance)\n{}\nEffects: {}'.format('Failure' if len(strings) > 1 else 'Success', rfe.title, ed['RareDefaultEventChance'], render_html(rfe.desc), rfe.list_effects()))
     except KeyError:
         pass
     return '\n\n{}\n\n'.format('-' * 20).join(strings)
@@ -464,7 +452,7 @@ class Effect:   #done: Priority goes 3/2/1/0
     def __init__(self, jdata, costs=None):
         self.raw = jdata
         self.quality = Quality.get(jdata['AssociatedQuality']['Id'])
-        self.equip = u'ForceEquip' in jdata
+        self.equip = 'ForceEquip' in jdata
         try:
             self.amount = jdata['Level']
         except:
@@ -494,41 +482,41 @@ class Effect:   #done: Priority goes 3/2/1/0
 
     def __repr__(self):
         try:
-            limits = u' if no more than {} and at least {}'.format(self.ceil, self.floor)
+            limits = ' if no more than {} and at least {}'.format(self.ceil, self.floor)
         except:
             try:
-                limits = u' if no more than {}'.format(self.ceil)
+                limits = ' if no more than {}'.format(self.ceil)
             except:
                 try:
-                    limits = u' only if at least {}'.format(self.floor)
+                    limits = ' only if at least {}'.format(self.floor)
                 except:
-                    limits = u''
+                    limits = ''
         if self.equip:
-            limits += u' (force equipped)'
+            limits += ' (force equipped)'
                 
         try:
             if hasattr(self.quality, 'leveldesc') and isinstance(self.setTo, int):
-                descs = sorted(self.quality.leveldesc.items(), reverse=True)
+                descs = sorted(list(self.quality.leveldesc.items()), reverse=True)
                 for x in descs:
                     if x[0] <= self.setTo:
                         desc = x
                         break
                 try:
-                    return u'{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
+                    return '{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
                 except NameError:
                     pass
-            return u'{} (set to {}{})'.format(self.quality.name, self.setTo, limits)
+            return '{} (set to {}{})'.format(self.quality.name, self.setTo, limits)
         except:
             if self.quality.nature == 2 or not self.quality.pyramid:
                 try:
-                    return u'{:+} x {}{}'.format(self.amount, self.quality.name, limits)
+                    return '{:+} x {}{}'.format(self.amount, self.quality.name, limits)
                 except:
-                    return u'{} {}{}'.format(('' if self.amount.startswith('-') else u'+') + self.amount, self.quality.name, limits)
+                    return '{} {}{}'.format(('' if self.amount.startswith('-') else '+') + self.amount, self.quality.name, limits)
             else:
                 try:
-                    return u'{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
+                    return '{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
                 except:
-                    return u'{} ({} cp{})'.format(self.quality.name, u'' if self.amount.startswith('-') else u'' + self.amount, limits)
+                    return '{} ({} cp{})'.format(self.quality.name, '' if self.amount.startswith('-') else '' + self.amount, limits)
         
 class Lodging:
     def __init__(self, jdata):
@@ -542,23 +530,20 @@ class Lodging:
     def __repr__(self):
         return self.name
 
-    def __unicode__(self):
-        string = u'Lodging: {} (Id {})'.format(self.name, self.id)
-        string += u'\nDescription: {}'.format(self.desc)
-        if not self.hand:
-            string += u'\nHand size: None'
-        elif self.hand == 1:
-            string += u'\nHand size: 1 card'
-        else:
-            string += u'\nHand size: {}'.format(u'{} cards'.format(self.hand) if self.hand else u'N/A')
-        return string
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        string = 'Lodging: {} (Id {})'.format(self.name, self.id)
+        string += '\nDescription: {}'.format(self.desc)
+        if not self.hand:
+            string += '\nHand size: None'
+        elif self.hand == 1:
+            string += '\nHand size: 1 card'
+        else:
+            string += '\nHand size: {}'.format('{} cards'.format(self.hand) if self.hand else 'N/A')
+        return string
 
     @classmethod
     def get(self, id):
-        key = u'domiciles:{}'.format(id)
+        key = 'domiciles:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -593,21 +578,18 @@ class Setting:
     def __repr__(self):
         return self.title
 
-    def __unicode__(self):
-        string = u'Setting name: {} (Id {})'.format(self.title, self.id)
-        if self.area:
-            string += u'\nStarting area: {}'.format(self.area)
-        if self.domicile:
-            string += u'\nStarting lodging: {}'.format(self.domicile)
-        string += u'\nItems are {}usable here'.format(u'' if self.items else u'NOT ')
-        return string
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        string = 'Setting name: {} (Id {})'.format(self.title, self.id)
+        if self.area:
+            string += '\nStarting area: {}'.format(self.area)
+        if self.domicile:
+            string += '\nStarting lodging: {}'.format(self.domicile)
+        string += '\nItems are {}usable here'.format('' if self.items else 'NOT ')
+        return string
 
     @classmethod
     def get(self, id):
-        key = u'settings:{}'.format(id)
+        key = 'settings:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -630,27 +612,24 @@ class Area:
         self.message = jdata.get('MoveMessage', '(no move message)')
 
     def __repr__(self):
-        return u'{} (Id {})'.format(self.name, self.id)
+        return '{} (Id {})'.format(self.name, self.id)
 
-    def __unicode__(self):
-        string = u'{} (Id {})'.format(self.name, self.id)
-        string += u'\nDescription: {}'.format(self.desc)
-        string += u'\nOpportunity cards are ' + (u'' if self.showOps else u'NOT ') + u'visible'
+    def __str__(self):
+        string = '{} (Id {})'.format(self.name, self.id)
+        string += '\nDescription: {}'.format(self.desc)
+        string += '\nOpportunity cards are ' + ('' if self.showOps else 'NOT ') + 'visible'
         try:
-            string += u'\nUnlocks with {}'.format(self.unlock.name)
+            string += '\nUnlocks with {}'.format(self.unlock.name)
         except AttributeError:
             pass
         if self.premium:
-            string += u'\nRequires Exceptional Friendship'
-        string += u'\n{}'.format(self.message)
+            string += '\nRequires Exceptional Friendship'
+        string += '\n{}'.format(self.message)
         return string
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
 
     @classmethod
     def get(self, id):
-        key = u'areas:{}'.format(id)
+        key = 'areas:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -664,11 +643,11 @@ class Act:  #for social actions
         self.msg = jdata['InviteMessage']
     
     def __repr__(self):
-        return u'"{}"'.format(self.name)
+        return '"{}"'.format(self.name)
     
     @classmethod
     def get(self, id):
-        key = u'acts:{}'.format(id)
+        key = 'acts:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -678,23 +657,23 @@ class Act:  #for social actions
 class AccessCode:
     def __init__(self, jdata):
         self.raw = jdata
-        self.name = jdata.get('Name', u'(no name)')
-        self.message1 = jdata.get('InitialMessage', u'(no message)')
-        self.message2 = jdata.get('CompletedMessage', u'(no message)')
+        self.name = jdata.get('Name', '(no name)')
+        self.message1 = jdata.get('InitialMessage', '(no message)')
+        self.message2 = jdata.get('CompletedMessage', '(no message)')
         self.effects = []
         for e in jdata['QualitiesAffected']:
             self.effects.append(Effect(e))
     
     def __repr__(self):
-        string = u'Access code name: {}'.format(self.name)
-        string += u'\nInitial message: {}'.format(self.message1)
-        string += u'\nFinish message: {}'.format(self.message2)
-        string += u'\nEffects: {}'.format(self.list_effects())
+        string = 'Access code name: {}'.format(self.name)
+        string += '\nInitial message: {}'.format(self.message1)
+        string += '\nFinish message: {}'.format(self.message2)
+        string += '\nEffects: {}'.format(self.list_effects())
         return string
     
     def list_effects(self):
         if self.effects != []:
-            return u'[{}]'.format(u', '.join([unicode(e) for e in self.effects]))
+            return '[{}]'.format(', '.join([str(e) for e in self.effects]))
 
     @classmethod
     def get(self, id):
@@ -717,17 +696,14 @@ class Exchange:
             self.shops.append(Shop(x))
     
     def __repr__(self):
-        return u'Exchange Title: {} (ID {})'.format(self.title, self.id)
+        return 'Exchange Title: {} (ID {})'.format(self.title, self.id)
     
-    def __unicode__(self):
-        return u'Exchange Name: {} (ID {})\nExchange Title: {}\nExchange Description: {}\nShops:\n{}'.format(self.name, self.id, self.title, self.desc, '\n'.join([s.name for s in self.shops]))
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
-    
+        return 'Exchange Name: {} (ID {})\nExchange Title: {}\nExchange Description: {}\nShops:\n{}'.format(self.name, self.id, self.title, self.desc, '\n'.join([s.name for s in self.shops]))
+
     @classmethod
     def get(self, id):
-        key = u'exchanges:{}'.format(id)
+        key = 'exchanges:{}'.format(id)
         if key in cache:
             return cache[key]
         else:
@@ -752,11 +728,8 @@ class Shop:
     def __repr__(self):
         return self.name
 
-    def __unicode__(self):
-        return u'Shop Name: {}\nDescription: {}\nItems: [{}]'.format(self.name, self.desc, ', '.join(self.offerings.keys()))
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return 'Shop Name: {}\nDescription: {}\nItems: [{}]'.format(self.name, self.desc, ', '.join(list(self.offerings.keys())))
 
     def __getitem__(self, key):
         return self.offerings[key]
@@ -767,37 +740,34 @@ class Offering:
         self.id = jdata.get('Id')
         self.item = Quality.get(jdata.get('Quality', {}).get('Id'))
         self.price = Quality.get(jdata.get('PurchaseQuality', {}).get('Id'))
-        self.buymessage = jdata.get('BuyMessage', u'(no message)')
+        self.buymessage = jdata.get('BuyMessage', '(no message)')
         if not self.buymessage.replace('"',''):
-            self.buymessage = u'(no message)'
-        self.sellmessage = jdata.get('SellMessage', u'(no message)')
+            self.buymessage = '(no message)'
+        self.sellmessage = jdata.get('SellMessage', '(no message)')
         if not self.sellmessage.replace('"',''):
-            self.sellmessage = u'(no message)'
+            self.sellmessage = '(no message)'
         if 'Cost' in jdata:
             self.buy = (jdata.get('Cost'), self.price)
         if 'SellPrice' in jdata:
             self.sell = (jdata.get('SellPrice'), self.price)
 
     def __repr__(self):
-        return u'Item: {}'.format(self.item.name)
-
-    def __unicode__(self):
-        string = u'Item: {}'.format(self.item.name)
-        try:
-            string += u'\nBuy for {0[0]} x {0[1].name}'.format(self.buy)
-            if self.buymessage != u'(no message)':
-                string += u' - Buy Message: {}'.format(self.buymessage)
-        except AttributeError:
-            if self.buymessage != u'(no message)':
-                string += u'\nBuy Message: {} (cannot be bought)'.format(self.buymessage)
-        try:
-            string += u'\nSell for {0[0]} x {0[1].name}'.format(self.sell)
-            if self.sellmessage != u'(no message)':
-                string += u' - Sell Message: {}'.format(self.sellmessage)
-        except AttributeError:
-            if self.sellmessage != u'(no message)':
-                string += u'\nSell Message: {} (cannot be sold)'.format(self.sellmessage)
-        return string
+        return 'Item: {}'.format(self.item.name)
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        string = 'Item: {}'.format(self.item.name)
+        try:
+            string += '\nBuy for {0[0]} x {0[1].name}'.format(self.buy)
+            if self.buymessage != '(no message)':
+                string += ' - Buy Message: {}'.format(self.buymessage)
+        except AttributeError:
+            if self.buymessage != '(no message)':
+                string += '\nBuy Message: {} (cannot be bought)'.format(self.buymessage)
+        try:
+            string += '\nSell for {0[0]} x {0[1].name}'.format(self.sell)
+            if self.sellmessage != '(no message)':
+                string += ' - Sell Message: {}'.format(self.sellmessage)
+        except AttributeError:
+            if self.sellmessage != '(no message)':
+                string += '\nSell Message: {} (cannot be sold)'.format(self.sellmessage)
+        return string
