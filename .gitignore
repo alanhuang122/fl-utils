@@ -1,2 +1,8 @@
 *.pyc
-text/fl.dat
+utils/text/
+bin/
+lib/
+lib64
+pip-selfcheck.json
+pyvenv.cfg
+*.swp
