@@ -52,7 +52,6 @@ def acquire_bulk(changes):
         except KeyError:
             print(u)
     return dec
-   
 
 def load():
     global data
@@ -127,6 +126,14 @@ def update():
     
 def print_diff(key):
     print((str(diff(old[key], data[key])).decode('string-escape')))
+
+def pe():
+    for x in changes['events']:
+        print(x, data['events:{}'.format(x)].get('Name'))
+
+def pq():
+    for x in changes['qualities']:
+        print(x, data['qualities:{}'.format(x)].get('Name'))
 
 load()
 import fl
