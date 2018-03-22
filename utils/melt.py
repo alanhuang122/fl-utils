@@ -125,7 +125,7 @@ def update():
             changes[datatype] = [id]
     
 def print_diff(key):
-    print((str(diff(old[key], data[key])).decode('string-escape')))
+    print(diff(old[key], data[key]))
 
 def pe():
     for x in changes['events']:
