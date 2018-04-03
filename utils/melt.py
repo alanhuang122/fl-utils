@@ -11,30 +11,23 @@ data = {}
 changes = {}
 old = {}
 
-def first(text,key):
-    ecb = AES.new(key, AES.MODE_ECB)
-    return ecb.decrypt(b64decode(text))[:16]
-    
-def second(text,key,iv):
-    ecb = AES.new(key, AES.MODE_CBC, iv)
-    return ecb.decrypt(b64decode(text))[16:]
-    
 def decrypt(text):
     key = 'eyJUaXRsZSI6Ildo'
-    iv = b64decode('7ENDyFzB5uxEtjFCpRpj3Q==')
-    return (first(text,key) + second(text,key,iv)).decode('utf-8')
+    iv = '\0' * 16
+
+    cbc = AES.new(key, AES.MODE_CBC, iv)
+    plain_text = cbc.decrypt(b64decode(text)).decode('utf-8')
+
+    # Remove PKCS#7 padding
+    return plain_text[:-ord(plain_text[-1])]
 
 def get(id, revision):
     data = requests.get('http://couchbase-fallenlondon.storynexus.com:4984/sync_gateway_json/{}?rev={}&revs=true&attachments=true'.format(id, revision), headers={'Host': 'couchbase-fallenlondon.storynexus.com:4984', 'User-Agent': None, 'Accept-Encoding': None, 'Connection': None}).json()
     return decrypt(data['body'])
 
-def clean(s):
-    temp = s.rsplit('}', 1)
-    return '{}}}'.format(temp[0])
-
 def acquire(id, revision):
     print(('acquiring {}'.format(id)))
-    return json.loads(clean(get(id, revision)))
+    return json.loads(get(id, revision))
 
 def acquire_bulk(changes):
     postlist = []
@@ -48,7 +41,7 @@ def acquire_bulk(changes):
     dec = []
     for u in updates:
         try:
-            dec.append(json.loads(clean(decrypt(u['body']))))
+            dec.append(json.loads(decrypt(u['body'])))
         except KeyError:
             print(u)
     return dec
