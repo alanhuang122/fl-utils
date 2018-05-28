@@ -15,7 +15,7 @@ print('logging in..........................', end='')
 r = s.post(api.format('login'), data={'email': login[0], 'password': login[2]})
 
 if r.status_code != 200:
-    sys.exit('login failed with code {}\ndata: {}'.format(r.status_code, r.text))
+    sys.exit('login failed with code {}'.format(r.status_code))
 
 s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
 print('success.')
@@ -26,15 +26,15 @@ print('getting actions.....................', end='')
 r = s.get(api.format('character/sidebar'))
 
 if r.status_code != 200:
-    sys.exit('getting sidebar info failed with code {}\ndata: {}'.format(r.status_code, r.text))
+    sys.exit('getting sidebar info failed with code {}'.format(r.status_code))
 
 actions = r.json()['Actions']
-print('{} actions available'.format(actions))
+print('{} action{} available'.format(actions, '' if actions == 1 else 's'))
 
 r = s.post(api.format('storylet'))
 
 if r.status_code != 200:
-    sys.exit('getting storylet info failed with code {}\ndata: {}'.format(r.status_code, r.text))
+    sys.exit('getting storylet info failed with code {}'.format(r.status_code))
 
 state = r.json()
 if state['Phase'] == 'In' and state['Storylet']['Id'] != 285304: # title: Offering Tribute to the Court of the Wakeful Eye
@@ -44,17 +44,17 @@ if state['Phase'] == 'In' and state['Storylet']['Id'] != 285304: # title: Offeri
     else:
         r = s.post(api.format('storylet/goback'))
         if r.status_code != 200:
-            sys.exit('going back failed with code {}\ndata: {}'.format(r.status_code, r.text))
+            sys.exit('going back failed with code {}'.format(r.status_code))
         state = r.json()
+    print('success.')
 
-print('success.')
 
 if state['Phase'] == 'Available':
     if current_area != 28:
         print('moving to labyrinth of tigers.......', end='')
         r = s.get(api.format('map'))
         if r.status_code != 200:
-            sys.exit('getting map failed with code {}\ndata: {}'.format(r.status_code, r.text))
+            sys.exit('getting map failed with code {}'.format(r.status_code))
 
         index = -1
         areas = r.json()['Areas']
@@ -68,7 +68,7 @@ if state['Phase'] == 'Available':
     r = s.post(api.format('storylet'))
 
     if r.status_code != 200:
-        sys.exit('getting storylet info failed with code {}\ndata: {}'.format(r.status_code, r.text))
+        sys.exit('getting storylet info failed with code {}'.format(r.status_code))
 
     print('entering storylet...................', end='')
     storylets = r.json()['Storylets']
@@ -96,7 +96,7 @@ while actions > 0:
     r = s.post(api.format('storylet/choosebranch'), data={'branchId': 211014, 'secondChanceIds': []})
     if r.status_code != 200:
         failures += 1
-        print('action failed with code {}\ndata: {}'.format(r.status_code, r.text))
+        print('action failed with code {}'.format(r.status_code))
     else:
         failures = 0
         end = r.json()['EndStorylet']
