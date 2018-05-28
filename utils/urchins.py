@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-import requests, json, netrc, sys
+from http.client import responses
+import requests
+import json
+import netrc
+import sys
 
 api = 'https://api.fallenlondon.com/api/{}'
 login = netrc.netrc().authenticators('fallenlondon')
@@ -15,7 +19,7 @@ print('logging in..........................', end='')
 r = s.post(api.format('login'), data={'email': login[0], 'password': login[2]})
 
 if r.status_code != 200:
-    sys.exit('login failed with code {}'.format(r.status_code))
+    sys.exit('login failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
 
 s.headers.update({'Authorization': 'Bearer {}'.format(r.json()['Jwt'])})
 print('success.')
@@ -26,7 +30,7 @@ print('getting actions.....................', end='')
 r = s.get(api.format('character/sidebar'))
 
 if r.status_code != 200:
-    sys.exit('getting sidebar info failed with code {}'.format(r.status_code))
+    sys.exit('getting sidebar info failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
 
 actions = r.json()['Actions']
 print('{} action{} available'.format(actions, '' if actions == 1 else 's'))
@@ -34,7 +38,7 @@ print('{} action{} available'.format(actions, '' if actions == 1 else 's'))
 r = s.post(api.format('storylet'))
 
 if r.status_code != 200:
-    sys.exit('getting storylet info failed with code {}'.format(r.status_code))
+    sys.exit('getting storylet info failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
 
 state = r.json()
 if state['Phase'] == 'In' and state['Storylet']['Id'] != 285304: # title: Offering Tribute to the Court of the Wakeful Eye
@@ -44,7 +48,7 @@ if state['Phase'] == 'In' and state['Storylet']['Id'] != 285304: # title: Offeri
     else:
         r = s.post(api.format('storylet/goback'))
         if r.status_code != 200:
-            sys.exit('going back failed with code {}'.format(r.status_code))
+            sys.exit('going back failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
         state = r.json()
     print('success.')
 
@@ -54,7 +58,7 @@ if state['Phase'] == 'Available':
         print('moving to labyrinth of tigers.......', end='')
         r = s.get(api.format('map'))
         if r.status_code != 200:
-            sys.exit('getting map failed with code {}'.format(r.status_code))
+            sys.exit('getting map failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
 
         index = -1
         areas = r.json()['Areas']
@@ -68,7 +72,7 @@ if state['Phase'] == 'Available':
     r = s.post(api.format('storylet'))
 
     if r.status_code != 200:
-        sys.exit('getting storylet info failed with code {}'.format(r.status_code))
+        sys.exit('getting storylet info failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
 
     print('entering storylet...................', end='')
     storylets = r.json()['Storylets']
@@ -78,8 +82,8 @@ if state['Phase'] == 'Available':
             r = s.post(api.format('storylet/begin/285304'))
             if r.status_code != 200 or not r.json()['IsSuccess']:
                 sys.exit('failed to start storylet\ndata: {}'.format(r.text))
+    print('success.')
 
-print('success.')
 
 # should be in the storylet
 storylet = r.json()['Storylet']
@@ -96,7 +100,7 @@ while actions > 0:
     r = s.post(api.format('storylet/choosebranch'), data={'branchId': 211014, 'secondChanceIds': []})
     if r.status_code != 200:
         failures += 1
-        print('action failed with code {}'.format(r.status_code))
+        print('action failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
     else:
         failures = 0
         end = r.json()['EndStorylet']
