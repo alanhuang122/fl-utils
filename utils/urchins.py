@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 from http.client import responses
+import datetime
 import requests
 import json
 import netrc
 import sys
 
+print('current time {}'.format(datetime.now()))
 api = 'https://api.fallenlondon.com/api/{}'
 login = netrc.netrc().authenticators('fallenlondon')
 
