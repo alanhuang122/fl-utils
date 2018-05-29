@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from http.client import responses
-import datetime
+from datetime import datetime
 import requests
 import json
 import netrc
