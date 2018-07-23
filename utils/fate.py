@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# fate.py
+# This script determines the most favorable currencies to purchase Fate in.
+# Due to StoryNexus response times, execution times can take up to one minute.
+# Prerequisites: Fallen London account, fixer.io account
+# Requirements: requests, beautifulsoup4
+
 from bs4 import BeautifulSoup as Soup
 import netrc
 from operator import itemgetter
@@ -12,7 +18,8 @@ fl = creds.authenticators('fallenlondon')
 fixer = creds.authenticators('fixer.io')
 
 s = requests.Session()
-r = s.post('http://fallenlondon.storynexus.com/Auth/EmailLogin', data={'emailAddress': fl[0], 'password': fl[2]})
+data = {'emailAddress': fl[0], 'password': fl[2]}
+r = s.post('http://fallenlondon.storynexus.com/Auth/EmailLogin', data=data)
 r = s.get('http://fallenlondon.storynexus.com/sn/BuyNexBraintree')
 
 soup = Soup(r.text, 'lxml')
@@ -20,9 +27,12 @@ select = soup.find('select', id='currency-code')
 currencies = [option.text for option in select.children]
 
 if target_currency not in currencies:
-    r = requests.get('http://data.fixer.io/api/latest', params={'access_key': fixer[0], 'symbols': ','.join(currencies + [target_currency])}).json()
+    params={'access_key': fixer[0],
+            'symbols': ','.join(currencies + [target_currency])}
 else:
-    r = requests.get('http://data.fixer.io/api/latest', params={'access_key': fixer[0], 'symbols': ','.join(currencies)}).json()
+    params={'access_key': fixer[0],
+            'symbols': ','.join(currencies)}
+r = requests.get('http://data.fixer.io/api/latest', params=params).json()
 rates = {k: 1 / r['rates'][target_currency] * v for k, v in r['rates'].items()}
 
 fate_rates = []
