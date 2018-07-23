@@ -9,7 +9,7 @@ import sys
 
 print('current time {}'.format(datetime.now()))
 api = 'https://api.fallenlondon.com/api/{}'
-login = netrc.netrc().authenticators('fallenlondon')
+login = netrc.netrc('/home/alan/.netrc').authenticators('fallenlondon')
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36'}
 
@@ -37,14 +37,16 @@ if r.status_code != 200:
 actions = r.json()['Actions']
 print('{} action{} available'.format(actions, '' if actions == 1 else 's'))
 
+print('getting storylet info...............', end='')
 r = s.post(api.format('storylet'))
 
 if r.status_code != 200:
     sys.exit('getting storylet info failed with code {} ({})'.format(r.status_code, responses[r.status_code]))
+print('success.')
 
 state = r.json()
 if state['Phase'] == 'In' and state['Storylet']['Id'] != 285304: # title: Offering Tribute to the Court of the Wakeful Eye
-    print('in different storylet, going back...')
+    print('in different storylet, going back...', end='')
     if not state['Storylet']['CanGoBack']:
         sys.exit('You are in storylet {}, and cannot go back.'.format(state['Storylet']['Name']))
     else:
@@ -70,7 +72,7 @@ if state['Phase'] == 'Available':
                 if r.status_code != 200 or not r.json()['IsSuccess']:
                     sys.exit('moving failed\ndata: {}'.format(r.text))
 
-    print('success.')
+        print('success.')
     r = s.post(api.format('storylet'))
 
     if r.status_code != 200:
