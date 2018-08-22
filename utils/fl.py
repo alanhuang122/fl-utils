@@ -457,14 +457,14 @@ class Effect:   #done: Priority goes 3/2/1/0
             self.amount = jdata['Level']
         except:
             try:
-                self.amount = sub_qualities(jdata['ChangeByAdvanced'])
+                self.amount = sub_qualities(jdata['ChangeByAdvanced']).strip()
             except KeyError:
                 pass
         try:
             self.setTo = jdata['SetToExactly']
         except:
             try:
-                self.setTo = sub_qualities(jdata['SetToExactlyAdvanced'])
+                self.setTo = sub_qualities(jdata['SetToExactlyAdvanced']).strip()
             except KeyError:
                 pass
         try:
@@ -511,12 +511,12 @@ class Effect:   #done: Priority goes 3/2/1/0
                 try:
                     return '{:+} x {}{}'.format(self.amount, self.quality.name, limits)
                 except:
-                    return '{} {}{}'.format(('' if self.amount.startswith('-') else '+') + self.amount, self.quality.name, limits)
+                    return '{} x {}{}'.format(('' if self.amount.startswith('-') else '+') + self.amount, self.quality.name, limits)
             else:
                 try:
                     return '{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
                 except:
-                    return '{} ({} cp{})'.format(self.quality.name, '' if self.amount.startswith('-') else '' + self.amount, limits)
+                    return '{} ({} cp{})'.format(self.quality.name, ('' if self.amount.startswith('-') else '+') + self.amount, limits)
         
 class Lodging:
     def __init__(self, jdata):
