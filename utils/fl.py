@@ -99,12 +99,12 @@ class Quality:
             qldstr = jdata['ChangeDescriptionText']
             self.changedesc = parse_qlds(qldstr)
         except KeyError:
-            pass
+            self.changedesc = None
         try:
             qldstr = jdata['LevelDescriptionText']
             self.leveldesc = parse_qlds(qldstr)
         except KeyError:
-            pass
+            self.leveldesc = None
         try:
             variables = {}
             d = json.loads(jdata['VariableDescriptionText'])
@@ -112,7 +112,7 @@ class Quality:
                 variables[x[0]] = parse_qlds(x[1])
             self.variables = variables
         except KeyError:
-            pass
+            self.variables = None
         self.cap = jdata.get('Cap')
         self.category = categories.get(jdata.get('Category'))
         self.tag = jdata.get('Tag')
@@ -154,6 +154,28 @@ class Quality:
                 cache[key].event = Storylet.get(cache[key].event)
             return cache[key]
 
+    def get_changedesc(self, level):
+        if self.changedesc and isinstance(level, int):
+            descs = sorted(list(self.changedesc.items()), reverse=True)
+            for x in descs:
+                if x[0] <= level:
+                    desc = x
+                    break
+                desc = (-1, 'no description')
+            return desc
+        return None
+
+    def get_leveldesc(self, level):
+        if self.leveldesc and isinstance(level, int):
+            descs = sorted(list(self.leveldesc.items()), reverse=True)
+            for x in descs:
+                if x[0] <= level:
+                    desc = x
+                    break
+                desc = (-1, 'no description')
+            return desc
+        return None
+
 def sub_qualities(string):
     for x in re.findall(r'\[qb?:(\d+)\]', string):
         string = string.replace(x, Quality.get(int(x)).name)
@@ -166,7 +188,7 @@ def parse_qlds(string):
         level, text = d.split('|', 1)
         level = int(level)
         qld[level] = text
-    return qld
+    return dict(sorted(qld.items()))
 
 class Requirement:  #done
     def __init__(self, jdata):
@@ -212,16 +234,32 @@ class Requirement:  #done
             else:
                 string += '{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
         else:
+            string += self.quality.name
             try:
                 if self.lower_bound == self.upper_bound:
-                    string += '{} exactly {}'.format(self.quality.name, self.lower_bound)
+                    desc = self.quality.get_leveldesc(self.lower_bound)
+                    if desc:
+                        desc = f' ({desc[1]})'
+                    string += f' exactly {self.lower_bound}{desc if desc else ""}'
                 else:
-                    string += '{} [{}-{}]'.format(self.quality.name, self.lower_bound, self.upper_bound)
+                    lower = self.quality.get_leveldesc(self.lower_bound)
+                    if lower:
+                        lower = f' ({lower[1]})'
+                    upper = self.quality.get_leveldesc(self.upper_bound)
+                    if upper:
+                        upper = f' ({upper[1]})'
+                    string += f' [{self.lower_bound}{lower if lower else ""}-{self.upper_bound}{upper if upper else ""}]'
             except:
                 try:
-                    string += '{} at least {}'.format(self.quality.name, self.lower_bound)
+                    desc = self.quality.get_leveldesc(self.lower_bound)
+                    if desc:
+                        desc = f' ({desc[1]})'
+                    string += f' at least {self.lower_bound}{desc if desc else ""}'
                 except:
-                    string += '{} no more than {}'.format(self.quality.name, self.upper_bound)
+                    desc = self.quality.get_leveldesc(self.upper_bound)
+                    if desc:
+                        desc = f' ({desc[1]})'
+                    string += f' no more than {self.upper_bound}{desc if desc else ""}'
         return string
 
 def render_requirements(rl, fate):
@@ -495,15 +533,11 @@ class Effect:   #done: Priority goes 3/2/1/0
             limits += ' (force equipped)'
                 
         try:
-            if hasattr(self.quality, 'leveldesc') and isinstance(self.setTo, int):
-                descs = sorted(list(self.quality.leveldesc.items()), reverse=True)
-                for x in descs:
-                    if x[0] <= self.setTo:
-                        desc = x
-                        break
+            if self.quality.changedesc and isinstance(self.setTo, int):
+                desc = self.quality.get_changedesc(self.setTo)
                 try:
                     return '{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
-                except NameError:
+                except TypeError:
                     pass
             return '{} (set to {}{})'.format(self.quality.name, self.setTo, limits)
         except:
