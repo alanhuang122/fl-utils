@@ -408,7 +408,11 @@ class Event:    #done
         self.lodging = jdata.get('MoveToDomicile', {}).get('Id')
         self.livingstory = jdata.get('LivingStory', {}).get('Id')
         self.img = jdata.get('Image')
-        assert jdata.get('SwitchToSettingId') == jdata.get('SwitchToSetting', {}).get('Id')
+        try:
+            assert jdata.get('SwitchToSettingId') == jdata.get('SwitchToSetting', {}).get('Id')
+        except AssertionError:
+            print('Warning: event setting IDs don\'t match')
+            print(jdata)
         try:
             self.newsetting = Setting.get(jdata.get('SwitchToSettingId'))
         except:
@@ -594,7 +598,12 @@ class Setting:
 
         self.area = jdata.get('StartingArea', {}).get('Id')
         if self.area:
-            assert jdata.get('StartingArea') == data['areas:{}'.format(self.area)]
+            try:
+                assert jdata.get('StartingArea') == data['areas:{}'.format(self.area)]
+            except AssertionError:
+                print('Warning: Area data mismatch')
+                print(jdata.get('StartingArea'))
+                print(data[f'areas:{self.area}'])
             self.area = Area.get(self.area)
 
         self.domicile = jdata.get('StartingDomicile')
