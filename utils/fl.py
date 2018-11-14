@@ -291,25 +291,28 @@ class Storylet: #done?
         self.type = 'Storylet' if jdata['Deck']['Name'] == 'Always' else 'Card' if jdata['Deck']['Name'] == 'Sometimes' else 'Unknown type'
         if self.type == 'Card':
             self.frequency = jdata['Distribution']
+            self.autofire = 'Autofire' in jdata
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
-        
-        self.branches = []
-        if not shallow:
-            for b in jdata['ChildBranches']:
-                branch=Branch.get(b, self)
-                self.branches.append(branch)
-                for e in list(branch.events.items()):
-                    if e[0].endswith('Event'):
-                        e[1].parent = branch
+        if self.autofire:
+            self.effects = [Effect(e) for e in jdata['QualitiesAffected']]
+        else:
+            self.branches = []
+            if not shallow:
+                for b in jdata['ChildBranches']:
+                    branch=Branch.get(b, self)
+                    self.branches.append(branch)
+                    for e in list(branch.events.items()):
+                        if e[0].endswith('Event'):
+                            e[1].parent = branch
 
     def __repr__(self):
         return '{}: "{}"'.format(self.type, self.title)
 
     def __str__(self):
         #_,c = os.popen('stty size', u'r').read().split()
-        string = '{} Title: "{}"\n'.format(self.type, self.title)
+        string = '{}{} Title: "{}"\n'.format('Autofire ' if self.autofire else '', self.type, self.title)
         try:
             string += 'Appears in {} '.format(self.setting.title)
         except AttributeError:
@@ -320,7 +323,10 @@ class Storylet: #done?
             pass
         string += '\nDescription: {}'.format(render_html(self.desc))
         string += '\nRequirements: {}'.format(render_requirements(self.requirements, None))
-        string += '\nBranches:\n{}'.format('\n\n{}\n\n'.format('~' * 20).join(self.render_branches()))
+        if self.autofire:
+            string += '\nEffects: {}'.format(self.effects)
+        else:
+            string += '\nBranches:\n{}'.format('\n\n{}\n\n'.format('~' * 20).join(self.render_branches()))
         return string
     
     def render_branches(self):
@@ -333,7 +339,8 @@ class Storylet: #done?
             return cache[key]
         else:
             cache[key] = Storylet(data['events:{}'.format(id)],True)
-            cache[key] = Storylet(data['events:{}'.format(id)],False)
+            if not cache[key].autofire:
+                cache[key] = Storylet(data['events:{}'.format(id)],False)
             return cache[key]
 
 class Branch:   #done
