@@ -292,6 +292,8 @@ class Storylet: #done?
         if self.type == 'Card':
             self.frequency = jdata['Distribution']
             self.autofire = 'Autofire' in jdata
+        else:
+            self.autofire = False
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
@@ -542,8 +544,13 @@ class Effect:   #done: Priority goes 3/2/1/0
             limits += ' (force equipped)'
                 
         try:
-            if self.quality.changedesc and isinstance(self.setTo, int):
-                desc = self.quality.get_changedesc(self.setTo)
+            if isinstance(self.setTo, int):
+                if self.quality.changedesc:
+                    desc = self.quality.get_changedesc(self.setTo)
+                elif self.quality.leveldesc:
+                    desc = self.quality.get_leveldesc(self.setTo)
+                else:
+                    desc = None
                 try:
                     return '{} (set to {} ({}){})'.format(self.quality.name, self.setTo, desc[1], limits)
                 except TypeError:
