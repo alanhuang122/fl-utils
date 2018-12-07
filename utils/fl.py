@@ -345,6 +345,16 @@ class Storylet: #done?
                 cache[key] = Storylet(data['events:{}'.format(id)],False)
             return cache[key]
 
+def add_requirements(l, req):
+    if any([key in req for key in ['DifficultyLevel', 'DifficultyAdvanced']]) and any([key in req for key in ['MaxLevel', 'MaxAdvanced', 'MinLevel', 'MinAdvanced']]):
+        l.append(Requirement(req))
+        for i in list(req.items()):
+            if i[0].startswith('Difficulty'):
+                req.pop(i[0])
+        l.append(Requirement(req))
+    else:
+        l.append(Requirement(req))
+
 class Branch:   #done
     def __init__(self, jdata, parent):
         self.raw = jdata
@@ -361,7 +371,7 @@ class Branch:   #done
             self.act = None
         self.requirements = []
         for r in jdata['QualitiesRequired']:
-            self.requirements.append(Requirement(r))
+            add_requirements(self.requirements, r)
         costs = [ {'AssociatedQuality': {'Id': r.quality.id}, 'Level': -r.lower_bound} for r in self.requirements if r.is_cost ]
         self.events = {}
         for key in list(jdata.keys()):
