@@ -330,10 +330,10 @@ class Storylet: #done?
         else:
             string += '\nBranches:\n{}'.format('\n\n{}\n\n'.format('~' * 20).join(self.render_branches()))
         return string
-    
+
     def render_branches(self):
         return [str(b) for b in self.branches]
-    
+
     @classmethod
     def get(self, id):
         key = 'storylets:{}'.format(id)
@@ -380,10 +380,10 @@ class Branch:   #done
                     self.events[key] = jdata[key]
                 else:
                     self.events[key] = Event.get(jdata[key], costs)
-    
+
     def __repr__(self):
         return '"{}"'.format(self.title)
-    
+
     def __str__(self):
         string = 'Branch Title: "{}"'.format(self.title)
         if self.desc:
@@ -393,7 +393,7 @@ class Branch:   #done
             string += '\nAction cost: {}'.format(self.cost)
         string += '\n{}'.format(render_events(self.events))
         return string
-    
+
     @classmethod
     def get(self, jdata, parent=None):
         key = 'branches:{}'.format(jdata['Id'])
@@ -407,7 +407,7 @@ class Event:    #done
     def __init__(self, jdata, costs):
         self.raw = jdata
         self.id = jdata['Id']
-        self.parent = None        
+        self.parent = None
         self.title = unescape(jdata.get('Name', '(no title)'))
         self.desc = unescape(jdata.get('Description', '(no description)'))
         self.category = jdata.get('Category')
@@ -444,13 +444,13 @@ class Event:    #done
             self.linkedevent = Storylet.get(jdata['LinkToEvent']['Id'])
         except KeyError:
             self.linkedevent = None
-    
+
     def __repr__(self):
         return 'Event: {}'.format(self.title) if self.title != '' else 'Event: (no title)'
-    
+
     def __str__(self):
         return 'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != '' else '(no title)', render_html(self.desc), self.list_effects())
-    
+
     def list_effects(self):
         effects = []
         if self.effects != []:
@@ -473,7 +473,7 @@ class Event:    #done
         if self.linkedevent:
             effects.append('Linked event: "{}" (Id {})'.format(self.linkedevent.title, self.linkedevent.id))
         return '\n'.join(effects)
-        
+
     @classmethod
     def get(self, jdata, costs):
         key = 'events:{}'.format(jdata['Id'])
@@ -552,7 +552,7 @@ class Effect:   #done: Priority goes 3/2/1/0
                     limits = ''
         if self.equip:
             limits += ' (force equipped)'
-                
+
         try:
             if isinstance(self.setTo, int):
                 if self.quality.changedesc:
@@ -577,7 +577,7 @@ class Effect:   #done: Priority goes 3/2/1/0
                     return '{} ({:+} cp{})'.format(self.quality.name, self.amount, limits)
                 except:
                     return '{} ({} cp{})'.format(self.quality.name, ('' if self.amount.startswith('-') else '+') + self.amount, limits)
-        
+
 class Lodging:
     def __init__(self, jdata):
         self.raw = jdata
@@ -637,7 +637,7 @@ class Setting:
 #        self.exchange = jdata.get('Exchange')
 #        if self.exchange:
 #            self.exchange = Exchange(self.exchange)
-        
+
         self.items = 'ItemsUsableHere' in jdata
 
     def __repr__(self):
@@ -700,16 +700,16 @@ class Area:
         else:
             cache[key] = Area(data[key])
             return cache[key]
-    
+
 class Act:  #for social actions
     def __init__(self, jdata):
         self.raw = jdata
         self.name = jdata['Name']
         self.msg = jdata['InviteMessage']
-    
+
     def __repr__(self):
         return '"{}"'.format(self.name)
-    
+
     @classmethod
     def get(self, id):
         key = 'acts:{}'.format(id)
@@ -728,14 +728,14 @@ class AccessCode:
         self.effects = []
         for e in jdata['QualitiesAffected']:
             self.effects.append(Effect(e))
-    
+
     def __repr__(self):
         string = 'Access code name: {}'.format(self.name)
         string += '\nInitial message: {}'.format(self.message1)
         string += '\nFinish message: {}'.format(self.message2)
         string += '\nEffects: {}'.format(self.list_effects())
         return string
-    
+
     def list_effects(self):
         if self.effects != []:
             return '[{}]'.format(', '.join([str(e) for e in self.effects]))
@@ -759,10 +759,10 @@ class Exchange:
         self.shops = []
         for x in jdata.get('Shops', []):
             self.shops.append(Shop(x))
-    
+
     def __repr__(self):
         return 'Exchange Title: {} (ID {})'.format(self.title, self.id)
-    
+
     def __str__(self):
         return 'Exchange Name: {} (ID {})\nExchange Title: {}\nExchange Description: {}\nShops:\n{}'.format(self.name, self.id, self.title, self.desc, '\n'.join([s.name for s in self.shops]))
 
