@@ -75,6 +75,9 @@ categories = {0:        'Unspecified',
               70003:    'Sustenance'
 }
 
+def render_text(string):
+    return sub_qualities(render_html(string))
+
 def render_html(string):
     string = re.sub(r'<.{,2}?br.{,2}?>','\n', string)
     string = re.sub(r'<.{,2}?[pP].{,2}?>','', string)
@@ -82,6 +85,30 @@ def render_html(string):
     string = re.sub('</?i>', '_', string)
     string = re.sub('</?strong>', '*', string)
     string = re.sub('</?b>', '*', string)
+    return string
+
+def sub_qualities(string):
+    if not isinstance(string, str):
+        return string
+    for x in set(re.findall(r'\[qb?:(\d+)\]', string)):
+        string = string.replace(x, Quality.get(int(x)).name)
+    for x in set(re.findall(r'(\[qvd:([^\(]+)\(([^\)]+)\)\])', string)):    # matches [qvd:quality name OR ID(QVD key)]
+        try:
+            quality = Quality.get(int(x[1]))
+        except ValueError:
+            quality = Quality.get_by_name(x[1])
+            if not quality:
+                continue
+        if quality.variables == None:
+            continue
+        text = ''
+        variable = quality.variables.get(x[2])
+        if variable is not None:
+            text = '\n'.join([f'{key}: {variable[key]}' for key in variable])
+        else:
+            text = 'None'
+        string = string.replace(x[0], f'{x[0]}\n{text}\n')
+        string = string.replace(x[0], x[0].replace(x[1], quality.name))
     return string
 
 class Quality:
@@ -173,11 +200,6 @@ class Quality:
                 desc = (-1, 'no description')
             return desc
         return None
-
-def sub_qualities(string):
-    for x in re.findall(r'\[qb?:(\d+)\]', string):
-        string = string.replace(x, Quality.get(int(x)).name)
-    return string
 
 def parse_qlds(string):
     qld = {}
@@ -323,7 +345,7 @@ class Storylet: #done?
             string += 'Limited to area: {}'.format(self.area.name)
         except AttributeError:
             pass
-        string += '\nDescription: {}'.format(render_html(self.desc))
+        string += '\nDescription: {}'.format(render_text(self.desc))
         string += '\nRequirements: {}'.format(render_requirements(self.requirements, None))
         if self.autofire:
             string += '\nEffects: {}'.format(self.effects)
@@ -387,7 +409,7 @@ class Branch:   #done
     def __str__(self):
         string = 'Branch Title: "{}"'.format(self.title)
         if self.desc:
-            string += '\nDescription: {}'.format(render_html(self.desc))
+            string += '\nDescription: {}'.format(render_text(self.desc))
         string += '\nRequirements: {}'.format(render_requirements(self.requirements, self.fate if hasattr(self, 'fate') else None))
         if self.cost != 1:
             string += '\nAction cost: {}'.format(self.cost)
@@ -449,7 +471,7 @@ class Event:    #done
         return 'Event: {}'.format(self.title) if self.title != '' else 'Event: (no title)'
 
     def __str__(self):
-        return 'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != '' else '(no title)', render_html(self.desc), self.list_effects())
+        return 'Title: "{}"\nDescription: {}\nEffects: {}\n'.format(self.title if self.title != '' else '(no title)', render_text(self.desc), self.list_effects())
 
     def list_effects(self):
         effects = []
@@ -487,22 +509,22 @@ def render_events(ed):
     strings = []
     try:
         se = ed['SuccessEvent']
-        strings.append( 'Success: "{}"\n{}\nEffects: {}'.format(se.title, render_html(se.desc), se.list_effects()))
+        strings.append( 'Success: "{}"\n{}\nEffects: {}'.format(se.title, render_text(se.desc), se.list_effects()))
     except KeyError:
         pass
     try:
         rse = ed['RareSuccessEvent']
-        strings.append('Rare Success: "{}" ({}% chance)\n{}\nEffects: {}'.format(rse.title, ed['RareSuccessEventChance'], render_html(rse.desc), rse.list_effects()))
+        strings.append('Rare Success: "{}" ({}% chance)\n{}\nEffects: {}'.format(rse.title, ed['RareSuccessEventChance'], render_text(rse.desc), rse.list_effects()))
     except KeyError:
         pass
     try:
         fe = ed['DefaultEvent']
-        strings.append('{}: "{}"\n{}\nEffects: {}'.format('Failure' if len(strings) > 0 else 'Event', fe.title, render_html(fe.desc), fe.list_effects()))
+        strings.append('{}: "{}"\n{}\nEffects: {}'.format('Failure' if len(strings) > 0 else 'Event', fe.title, render_text(fe.desc), fe.list_effects()))
     except KeyError:
         pass
     try:
         rfe = ed['RareDefaultEvent']
-        strings.append('Rare {}: "{}" ({}% chance)\n{}\nEffects: {}'.format('Failure' if len(strings) > 1 else 'Success', rfe.title, ed['RareDefaultEventChance'], render_html(rfe.desc), rfe.list_effects()))
+        strings.append('Rare {}: "{}" ({}% chance)\n{}\nEffects: {}'.format('Failure' if len(strings) > 1 else 'Success', rfe.title, ed['RareDefaultEventChance'], render_text(rfe.desc), rfe.list_effects()))
     except KeyError:
         pass
     return '\n\n{}\n\n'.format('-' * 20).join(strings)
@@ -583,7 +605,7 @@ class Lodging:
         self.raw = jdata
         self.id = jdata.get('Id')
         self.name = jdata.get('Name', '(no name)')
-        self.desc = render_html(jdata.get('Description', '(no description)'))
+        self.desc = render_text(jdata.get('Description', '(no description)'))
         self.image = jdata.get('ImageName')
         self.hand = jdata.get('MaxHandSize')
 
