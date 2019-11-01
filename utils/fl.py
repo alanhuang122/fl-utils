@@ -257,7 +257,10 @@ class Requirement:  #done
             string += '[Branch hidden if failed] '
         if self.type == 'Challenge':
             if self.quality.id == 432:
-                string += 'Luck: {}% chance'.format(50 - self.difficulty * 10)
+                try:
+                    string += 'Luck: {}% chance'.format(50 - self.difficulty * 10)
+                except TypeError:
+                    string += 'Luck: ({})% chance'.format('50 - ({}) * 10'.format(self.difficulty))
             else:
                 string += '{} {}: {} {}'.format(self.test_type, self.type, self.quality.name, self.difficulty)
         else:
