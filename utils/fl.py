@@ -303,7 +303,10 @@ def render_requirements(rl, fate):
             challenges.append(str(r))
     if not reqs and not challenges:
         return 'None'
-    return ', '.join(reqs) + '\n' + '\n'.join(challenges)
+    string = ', '.join(reqs)
+    if challenges:
+        string += '\n' + '\n'.join(challenges)
+    return string
 
 class Storylet: #done?
     def __init__(self, jdata, shallow=False):
