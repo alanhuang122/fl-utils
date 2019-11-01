@@ -738,11 +738,73 @@ class Area:
 class Act:  #for social actions
     def __init__(self, jdata):
         self.raw = jdata
-        self.name = jdata['Name']
-        self.msg = jdata['InviteMessage']
+        self.id = jdata.get('Id')
+        self.name = jdata.get('Name', '(no name)')
+        self.is_external = 'InvitationDomain' in jdata
+        self.invitemsg = jdata.get('InviteMessage')
+        self.t_invitemsg = jdata.get('TwitterInviteMessage')
+        self.acceptmsg = jdata.get('AcceptMessage')
+        self.winmsg = jdata.get('WinMessage')
+        self.losemsg = jdata.get('LoseMessage')
+
+        self.type = jdata.get('InteractionType') # 0: cooperative; 1: competitive
+
+        self.challenge = jdata.get('ChallengeOn')
+        if self.challenge:
+            self.challenge = Quality.get(self.challenge.get('Id'))
+
+        self.target_requirements = []
+        for r in jdata.get('QualitiesRequired', []):
+            add_requirements(self.target_requirements, r)
+
+        self.inviter_requirements = []
+        for r in jdata.get('QualitiesRequiredOnInviter', []):
+            add_requirements(self.inviter_requirements, r)
+
+        self.victory_effects = []
+        for e in jdata.get('QualitiesAffectedOnVictor', []):
+            self.victory_effects.append(Effect(e))
+
+        self.default_effects = []
+        for e in jdata.get('QualitiesAffectedOnTarget', []):
+            self.default_effects.append(Effect(e))
+
+        self.modifier = sub_qualities(jdata.get('InviterModifier'))
+
+        self.event = jdata.get('SocialEvent')
+        if self.event:
+            self.event = Storylet.get(self.event['Id'])
 
     def __repr__(self):
-        return '"{}"'.format(self.name)
+        return 'Social action: "{}"'.format(self.name)
+
+    def __str__(self):
+        if self.is_external:
+            string = f'External social action: "{self.name}"'
+        else:
+            string = f'Social action: "{self.name}"'
+        string += f'\nInvite message: {self.invitemsg}'
+        if self.t_invitemsg:
+            string += f'\nTwitter invite message: {self.t_invitemsg}'
+        if self.inviter_requirements:
+            string += f'\nRequirements for inviter: {", ".join([str(r) for r in self.inviter_requirements])}'
+        if self.target_requirements:
+            string += f'\nRequirements for target: {", ".join([str(r) for r in self.target_requirements])}'
+        if self.type:
+            string += f'\nChallenge: '
+            if self.modifier:
+                string += f'[q:{self.challenge.name}] + {self.modifier} vs. '
+            string += self.challenge.name
+        string += f'\nAccept message: {self.acceptmsg}'
+        string += f'\n\n{"Victory" if self.type else "Inviter"}:'
+        string += f'\nMessage: {self.winmsg}'
+        string += f'\nEffects: [{", ".join([str(e) for e in self.victory_effects])}]'
+        string += f'\n\n{"Loss" if self.type else "Target"}:'
+        string += f'\nMessage: {self.losemsg}'
+        string += f'\nEffects: [{", ".join([str(e) for e in self.default_effects])}]'
+        if self.event:
+            string += f'\nAssociated storylet: {self.event.title}'
+        return string
 
     @classmethod
     def get(self, id):
