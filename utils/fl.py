@@ -179,6 +179,13 @@ class Quality:
                 cache[key].event = Storylet.get(cache[key].event)
             return cache[key]
 
+    @classmethod
+    def get_by_name(self, name):
+        for key in data:
+            if key.startswith('qualities:') and data[key].get('Name') == name:
+                return Quality(data[key])
+        return None
+
     def get_changedesc(self, level):
         if self.changedesc and isinstance(level, int):
             descs = sorted(list(self.changedesc.items()), reverse=True)
