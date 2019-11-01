@@ -248,8 +248,7 @@ class Requirement:  #done
             self.test_type = self.quality.test_type
         else:
             self.type = 'Requirement'
-        assert jdata.get('BranchVisibleWhenRequirementFailed') == jdata.get('VisibleWhenRequirementFailed')
-        self.visibility = jdata.get('BranchVisibleWhenRequirementFailed', False)
+        self.visibility = jdata.get('VisibleWhenRequirementFailed', False)
 
     def __repr__(self):
         string = ''
