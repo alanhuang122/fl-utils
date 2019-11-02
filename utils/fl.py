@@ -575,7 +575,10 @@ class Effect:   #done: Priority goes 3/2/1/0
 
     def __repr__(self):
         try:
-            limits = ' if no more than {} and at least {}'.format(self.ceil, self.floor)
+            if self.ceil == self.floor:
+                limits = ' if exactly {}'.format(self.ceil)
+            else:
+                limits = ' if no more than {} and at least {}'.format(self.ceil, self.floor)
         except:
             try:
                 limits = ' if no more than {}'.format(self.ceil)
