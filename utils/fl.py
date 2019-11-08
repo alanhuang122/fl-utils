@@ -323,11 +323,9 @@ class Storylet: #done?
         except KeyError:
             self.area = None
         self.type = 'Storylet' if jdata['Deck']['Name'] == 'Always' else 'Card' if jdata['Deck']['Name'] == 'Sometimes' else 'Unknown type'
+        self.autofire = 'Autofire' in jdata
         if self.type == 'Card':
             self.frequency = jdata['Distribution']
-            self.autofire = 'Autofire' in jdata
-        else:
-            self.autofire = False
         self.requirements = []
         for r in jdata['QualitiesRequired']:
             self.requirements.append(Requirement(r))
